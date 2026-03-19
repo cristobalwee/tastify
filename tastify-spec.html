@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>tastify — Technical Spec</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Instrument+Sans:wght@400;500;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #08080a;
+    --surface: #111114;
+    --surface-2: #18181c;
+    --border: #232328;
+    --border-hover: #3a3a42;
+    --text: #e4e4e7;
+    --text-dim: #71717a;
+    --accent: #a78bfa;
+    --accent-dim: rgba(167,139,250,0.12);
+    --green: #4ade80;
+    --green-dim: rgba(74,222,128,0.1);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.1);
+    --amber: #fbbf24;
+    --amber-dim: rgba(251,191,36,0.1);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.08);
+    --mono: 'DM Mono', monospace;
+    --sans: 'Instrument Sans', system-ui, sans-serif;
+    --radius: 10px;
+  }
+
+  body {
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .container {
+    max-width: 820px;
+    margin: 0 auto;
+    padding: 3rem 1.5rem 6rem;
+  }
+
+  /* ═══ HEADER ═══════════════════════════════════ */
+  .header {
+    margin-bottom: 2.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .header-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+    margin-bottom: 0.5rem;
+  }
+  .header h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, var(--accent) 0%, #c4b5fd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .header p {
+    color: var(--text-dim);
+    font-size: 0.9375rem;
+    max-width: 560px;
+  }
+
+  /* ═══ NAV ══════════════════════════════════════ */
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 2.5rem;
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    padding: 0.75rem 0;
+    z-index: 10;
+    border-bottom: 1px solid transparent;
+  }
+  .nav.scrolled { border-bottom-color: var(--border); }
+  .nav button {
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--border);
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .nav button:hover {
+    color: var(--text);
+    border-color: var(--border-hover);
+    background: var(--surface);
+  }
+  .nav button.active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-dim);
+  }
+
+  /* ═══ SECTIONS ═════════════════════════════════ */
+  .section { display: none; animation: fadeUp 250ms ease; }
+  .section.active { display: block; }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ═══ CARDS ════════════════════════════════════ */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .card h3 {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+  .card p {
+    font-size: 0.8125rem;
+    color: var(--text-dim);
+    line-height: 1.6;
+  }
+  .card p + p { margin-top: 0.5rem; }
+
+  /* ═══ HERO ═════════════════════════════════════ */
+  .hero {
+    text-align: center;
+    padding: 3rem 1.5rem 2.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.06) 0%, transparent 70%),
+                var(--surface);
+  }
+  .hero-title {
+    font-size: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    margin-bottom: 0.375rem;
+    background: linear-gradient(135deg, var(--text) 40%, var(--accent) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .hero-sub {
+    color: var(--text-dim);
+    font-size: 1.0625rem;
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+  }
+  .pkg-row {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .pkg-tag {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    padding: 0.3rem 0.7rem;
+    border-radius: 5px;
+  }
+  .pkg-tag.green { background: var(--green-dim); color: var(--green); }
+  .pkg-tag.blue { background: var(--blue-dim); color: var(--blue); }
+  .pkg-tag.amber { background: var(--amber-dim); color: var(--amber); }
+
+  /* ═══ PRINCIPLES ═══════════════════════════════ */
+  .principles {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+  }
+  @media (max-width: 580px) { .principles { grid-template-columns: 1fr; } }
+  .principle {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.125rem;
+  }
+  .principle-num {
+    font-family: var(--mono);
+    font-size: 0.625rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    display: block;
+    margin-bottom: 0.375rem;
+  }
+  .principle strong {
+    font-size: 0.875rem;
+    font-weight: 600;
+    display: block;
+    margin-bottom: 0.3rem;
+  }
+  .principle p { font-size: 0.8125rem; color: var(--text-dim); line-height: 1.55; }
+
+  /* ═══ ENDPOINTS ════════════════════════════════ */
+  .ep-list { display: flex; flex-direction: column; gap: 4px; }
+  .ep {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    background: var(--surface-2);
+    font-size: 0.8125rem;
+  }
+  .ep.gone { opacity: 0.45; }
+  .ep.gone code { text-decoration: line-through; }
+  .ep-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .ep-dot.g { background: var(--green); }
+  .ep-dot.r { background: var(--red); }
+  .ep code {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    flex: 1;
+    color: var(--text);
+  }
+  .ep-label {
+    font-size: 0.6875rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  /* ═══ CODE BLOCKS ══════════════════════════════ */
+  .code {
+    background: #0c0c0e;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+  }
+  .code:last-child { margin-bottom: 0; }
+  .code-head {
+    font-family: var(--mono);
+    font-size: 0.6875rem;
+    color: var(--text-dim);
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.015);
+    font-weight: 400;
+  }
+  .code pre {
+    margin: 0;
+    padding: 1rem;
+    overflow-x: auto;
+  }
+  .code code {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    line-height: 1.7;
+    color: #b4b4bc;
+    white-space: pre;
+  }
+  .code pre::-webkit-scrollbar { height: 5px; }
+  .code pre::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+
+  /* ═══ DEP GRAPH ════════════════════════════════ */
+  .dep-graph {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 1.75rem 0;
+  }
+  .dep-row { display: flex; gap: 0.875rem; flex-wrap: wrap; justify-content: center; }
+  .dep-box {
+    font-family: var(--mono);
+    font-size: 0.75rem;
+    font-weight: 400;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    border: 1px solid;
+  }
+  .dep-box.g { background: var(--green-dim); border-color: rgba(74,222,128,0.25); color: var(--green); }
+  .dep-box.b { background: var(--blue-dim); border-color: rgba(96,165,250,0.25); color: var(--blue); }
+  .dep-box.a { background: var(--amber-dim); border-color: rgba(251,191,36,0.25); color: var(--amber); }
+  .dep-box.n { background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-dim); }
+  .dep-arrow { font-size: 0.75rem; color: var(--text-dim); }
+  .dep-note { font-size: 0.8125rem; color: var(--text-dim); text-align: center; margin-top: 0.75rem; line-height: 1.5; }
+
+  /* ═══ INFO GRID ════════════════════════════════ */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.875rem;
+  }
+  @media (max-width: 580px) { .info-grid { grid-template-columns: 1fr; } }
+  .info-item {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1rem;
+  }
+  .info-item strong {
+    font-family: var(--mono);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .info-item p { font-size: 0.8125rem; color: var(--text-dim); line-height: 1.5; }
+
+  /* ═══ SIZE TABLE ═══════════════════════════════ */
+  .size-table {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .size-row {
+    display: grid;
+    grid-template-columns: 1fr 72px 72px;
+    padding: 0.6rem 1rem;
+    font-size: 0.8125rem;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+  }
+  .size-row:last-child { border-bottom: none; }
+  .size-row.h {
+    background: rgba(255,255,255,0.025);
+    font-weight: 600;
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+  }
+  .size-row code { font-family: var(--mono); font-size: 0.7rem; }
+  .size-val {
+    color: var(--green);
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 0.8125rem;
+  }
+  .size-note {
+    font-size: 0.8125rem;
+    color: var(--text-dim);
+    margin-top: 0.75rem;
+    line-height: 1.55;
+  }
+
+  /* ═══ DIVIDER ══════════════════════════════════ */
+  .spacer { height: 0.25rem; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="header-eyebrow">Technical Specification v0.1</div>
+    <h1><em>tastify</em> — API &amp; Package Architecture</h1>
+    <p>A lightweight library for displaying Spotify listening data on developer portfolio sites. React, vanilla JS, and framework-agnostic.</p>
+  </header>
+
+  <!-- NAV -->
+  <nav class="nav" id="nav">
+    <button class="active" data-section="overview">Overview</button>
+    <button data-section="architecture">Architecture</button>
+    <button data-section="core">Core Package</button>
+    <button data-section="react">React Package</button>
+    <button data-section="vanilla">Vanilla Package</button>
+    <button data-section="theming">Theming</button>
+    <button data-section="server">Token Server</button>
+    <button data-section="dx">Developer Experience</button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- OVERVIEW -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section active" id="overview">
+    <div class="hero">
+      <div class="hero-title">tastify</div>
+      <div class="hero-sub">Spotify listening widgets for developer portfolios.</div>
+      <div class="pkg-row">
+        <span class="pkg-tag green">@tastify/core</span>
+        <span class="pkg-tag blue">@tastify/react</span>
+        <span class="pkg-tag amber">@tastify/vanilla</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Design Principles</h3>
+      <div class="principles">
+        <div class="principle">
+          <span class="principle-num">01</span>
+          <strong>Tiny footprint</strong>
+          <p>Core &lt;3kb gzip. React ~5kb. Vanilla ~4kb. No one adds weight to a portfolio for a widget.</p>
+        </div>
+        <div class="principle">
+          <span class="principle-num">02</span>
+          <strong>Beautiful defaults, fully overridable</strong>
+          <p>Ships with a refined default theme via CSS custom properties. Headless mode for complete control.</p>
+        </div>
+        <div class="principle">
+          <span class="principle-num">03</span>
+          <strong>Dev Mode aware</strong>
+          <p>Built around Spotify's Feb 2026 restrictions. No batch endpoints, smart request dedup, graceful degradation.</p>
+        </div>
+        <div class="principle">
+          <span class="principle-num">04</span>
+          <strong>Zero config for the common case</strong>
+          <p>One provider, one token endpoint, drop in components. CLI scaffolds the serverless function.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Scope — Endpoints Available in Dev Mode (Post Feb 2026)</h3>
+      <div class="ep-list">
+        <div class="ep"><span class="ep-dot g"></span><code>GET /me/player/currently-playing</code><span class="ep-label">Now Playing</span></div>
+        <div class="ep"><span class="ep-dot g"></span><code>GET /me/player/recently-played</code><span class="ep-label">Recently Played</span></div>
+        <div class="ep"><span class="ep-dot g"></span><code>GET /me/top/tracks</code><span class="ep-label">Top Tracks</span></div>
+        <div class="ep"><span class="ep-dot g"></span><code>GET /me/top/artists</code><span class="ep-label">Top Artists</span></div>
+        <div class="ep"><span class="ep-dot g"></span><code>GET /me/player</code><span class="ep-label">Playback State</span></div>
+        <div class="ep"><span class="ep-dot g"></span><code>GET /me/playlists</code><span class="ep-label">My Playlists</span></div>
+        <div class="ep gone"><span class="ep-dot r"></span><code>GET /artists (batch)</code><span class="ep-label">Removed</span></div>
+        <div class="ep gone"><span class="ep-dot r"></span><code>GET /artists/{id}/top-tracks</code><span class="ep-label">Removed</span></div>
+        <div class="ep gone"><span class="ep-dot r"></span><code>GET /browse/new-releases</code><span class="ep-label">Removed</span></div>
+        <div class="ep gone"><span class="ep-dot r"></span><code>GET /users/{id}/playlists</code><span class="ep-label">Removed</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- ARCHITECTURE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="architecture">
+    <div class="card">
+      <h3>Monorepo Structure</h3>
+      <div class="code"><div class="code-head">packages/</div><pre><code>tastify/
+├── packages/
+│   ├── core/                  # @tastify/core
+│   │   ├── src/
+│   │   │   ├── client.ts      # TastifyClient class
+│   │   │   ├── endpoints.ts   # API method implementations
+│   │   │   ├── cache.ts       # In-memory LRU cache + SWR
+│   │   │   ├── poller.ts      # Now-playing polling engine
+│   │   │   ├── types.ts       # Shared type definitions
+│   │   │   └── index.ts
+│   │   └── package.json
+│   │
+│   ├── react/                 # @tastify/react
+│   │   ├── src/
+│   │   │   ├── provider.tsx   # &lt;TastifyProvider&gt;
+│   │   │   ├── hooks/
+│   │   │   │   ├── useNowPlaying.ts
+│   │   │   │   ├── useTopTracks.ts
+│   │   │   │   ├── useTopArtists.ts
+│   │   │   │   └── useRecentlyPlayed.ts
+│   │   │   ├── components/
+│   │   │   │   ├── NowPlaying.tsx
+│   │   │   │   ├── TopTracks.tsx
+│   │   │   │   ├── TopArtists.tsx
+│   │   │   │   ├── RecentlyPlayed.tsx
+│   │   │   │   ├── TrackCard.tsx
+│   │   │   │   └── ArtistCard.tsx
+│   │   │   ├── styles/
+│   │   │   │   └── tastify.css    # Default theme
+│   │   │   └── index.ts
+│   │   └── package.json
+│   │
+│   ├── vanilla/               # @tastify/vanilla
+│   │   ├── src/
+│   │   │   ├── mount.ts       # Imperative mount API
+│   │   │   ├── renderer.ts    # Lightweight DOM renderer
+│   │   │   ├── auto-init.ts   # data-attribute scanner
+│   │   │   └── index.ts
+│   │   └── package.json
+│   │
+│   └── cli/                   # tastify (CLI tool)
+│       ├── src/
+│       │   ├── init.ts        # Auth flow + token generation
+│       │   ├── templates/     # Serverless fn templates
+│       │   └── index.ts
+│       └── package.json
+│
+├── docs/                      # Documentation site
+├── examples/
+│   ├── next-app/
+│   ├── astro-site/
+│   └── static-html/
+└── turbo.json</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Dependency Graph</h3>
+      <div class="dep-graph">
+        <div class="dep-row">
+          <div class="dep-box a">@tastify/vanilla</div>
+          <div class="dep-box b">@tastify/react</div>
+        </div>
+        <div class="dep-arrow">↓ depends on</div>
+        <div class="dep-row">
+          <div class="dep-box g">@tastify/core</div>
+        </div>
+        <div class="dep-arrow">↓ calls</div>
+        <div class="dep-row">
+          <div class="dep-box n">Spotify Web API</div>
+        </div>
+      </div>
+      <p class="dep-note">Core has zero dependencies. React peer-depends on react ≥18. Vanilla has zero framework deps.</p>
+    </div>
+
+    <div class="card">
+      <h3>Data Flow</h3>
+      <div class="code"><div class="code-head">Token refresh lifecycle</div><pre><code>┌──────────────┐   GET /api/spotify/token   ┌───────────────────┐
+│  Browser      │ ────────────────────────▶ │  Serverless Fn    │
+│  (tastify)    │ ◀──────────────────────── │  (your backend)   │
+│               │   { access_token, exp }   │                   │
+└──────┬───────┘                            └────────┬──────────┘
+       │                                             │
+       │  GET /me/player/currently-playing           │  POST accounts.spotify.com/api/token
+       │  Authorization: Bearer {token}              │  grant_type=refresh_token
+       ▼                                             ▼
+┌──────────────┐                            ┌───────────────────┐
+│  Spotify      │                            │  Spotify Accounts  │
+│  Web API      │                            │  Service           │
+└──────────────┘                            └───────────────────┘
+
+Refresh strategy:
+  1. Client calls getToken() before each API request
+  2. getToken() checks if cached token is within expiry window
+  3. If expired → hits your /api/spotify/token endpoint
+  4. Endpoint uses stored refresh_token → returns new access_token
+  5. Client caches token for ~55 minutes (5min safety buffer)
+  6. All transparent to the component layer</code></pre></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- CORE -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="core">
+    <div class="card">
+      <h3>TastifyClient</h3>
+      <div class="code"><div class="code-head">@tastify/core — client.ts</div><pre><code>interface TastifyConfig {
+  /**
+   * Static access token — simplest option, expires in 1hr.
+   * For persistent sites, use getToken instead.
+   */
+  token?: string
+
+  /**
+   * Async function returning a fresh access token.
+   * Called before each request when token is expired.
+   * Typically hits your /api/spotify/token endpoint.
+   */
+  getToken?: () =&gt; Promise&lt;string&gt;
+
+  /**
+   * Cache TTL in ms per endpoint type.
+   * Defaults tuned for portfolio use: now-playing is short,
+   * top tracks is long since it changes slowly.
+   */
+  cacheTTL?: {
+    nowPlaying?: number      // default: 30_000  (30s)
+    recentlyPlayed?: number  // default: 60_000  (1min)
+    topTracks?: number       // default: 300_000 (5min)
+    topArtists?: number      // default: 300_000 (5min)
+    playbackState?: number   // default: 10_000  (10s)
+  }
+}
+
+class TastifyClient {
+  constructor(config: TastifyConfig)
+
+  // ── Data methods ────────────────────────────────
+
+  /** Currently playing track, or null if idle. */
+  getNowPlaying(): Promise&lt;NowPlayingData | null&gt;
+
+  /** User's top tracks for a given time range. */
+  getTopTracks(opts?: {
+    timeRange?: 'short_term' | 'medium_term' | 'long_term'
+    limit?: number  // 1–50, default 10
+  }): Promise&lt;TopTracksData&gt;
+
+  /** User's top artists for a given time range. */
+  getTopArtists(opts?: {
+    timeRange?: 'short_term' | 'medium_term' | 'long_term'
+    limit?: number  // 1–50, default 10
+  }): Promise&lt;TopArtistsData&gt;
+
+  /** Recently played tracks with timestamps. */
+  getRecentlyPlayed(opts?: {
+    limit?: number  // 1–50, default 20
+  }): Promise&lt;RecentlyPlayedData&gt;
+
+  // ── Polling ─────────────────────────────────────
+
+  /**
+   * Polls now-playing at `intervalMs`.
+   * Callback fires ONLY when the track changes
+   * (deduped by track URI). Returns unsubscribe fn.
+   */
+  onNowPlayingChange(
+    callback: (data: NowPlayingData | null) =&gt; void,
+    intervalMs?: number  // default: 15_000
+  ): () =&gt; void
+
+  // ── Lifecycle ───────────────────────────────────
+
+  /** Clears cache, stops all polling. */
+  destroy(): void
+}</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Type Definitions</h3>
+      <div class="code"><div class="code-head">@tastify/core — types.ts</div><pre><code>// ── Normalized types ──────────────────────────────
+// Spotify's raw API returns deeply nested objects.
+// Tastify normalizes into flat, ergonomic shapes.
+
+interface TastifyTrack {
+  id: string
+  uri: string
+  name: string
+  artists: TastifyArtist[]
+  album: TastifyAlbum
+  durationMs: number
+  previewUrl: string | null
+  externalUrl: string          // open.spotify.com link
+  explicit: boolean
+}
+
+interface TastifyArtist {
+  id: string
+  uri: string
+  name: string
+  images: TastifyImage[]       // sorted largest → smallest
+  genres: string[]
+  externalUrl: string
+}
+
+interface TastifyAlbum {
+  id: string
+  uri: string
+  name: string
+  images: TastifyImage[]
+  releaseDate: string
+  externalUrl: string
+}
+
+interface TastifyImage {
+  url: string
+  width: number
+  height: number
+}
+
+// ── Endpoint responses ────────────────────────────
+
+interface NowPlayingData {
+  isPlaying: boolean
+  track: TastifyTrack
+  progressMs: number
+  device?: { name: string; type: string }
+  fetchedAt: number
+}
+
+interface TopTracksData {
+  tracks: TastifyTrack[]
+  timeRange: TimeRange
+  fetchedAt: number
+}
+
+interface TopArtistsData {
+  artists: TastifyArtist[]
+  timeRange: TimeRange
+  fetchedAt: number
+}
+
+interface RecentlyPlayedData {
+  tracks: Array&lt;{
+    track: TastifyTrack
+    playedAt: string           // ISO timestamp
+  }&gt;
+  fetchedAt: number
+}
+
+// ── Utilities ─────────────────────────────────────
+
+type TimeRange = 'short_term' | 'medium_term' | 'long_term'
+
+interface TastifyError {
+  status: number
+  message: string
+  retryAfter?: number         // from 429 rate-limit header
+}
+
+type DataState&lt;T&gt; =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: T }
+  | { status: 'error'; error: TastifyError }</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Caching Strategy</h3>
+      <div class="code"><div class="code-head">@tastify/core — cache.ts</div><pre><code>/**
+ * Simple in-memory cache with per-key TTL.
+ *
+ * Design decisions:
+ * - No localStorage (SSR-hostile, not available in Workers)
+ * - Stale-while-revalidate: returns cached data immediately,
+ *   refetches in background if past soft TTL
+ * - Hard TTL eviction prevents serving very stale data
+ * - Dedup: concurrent requests for same key → one fetch
+ */
+
+interface CacheEntry&lt;T&gt; {
+  data: T
+  fetchedAt: number
+  softTTL: number    // serve from cache, trigger bg refresh
+  hardTTL: number    // force refetch, don't serve stale
+}
+
+/**
+ * Request deduplication:
+ *
+ * If component A and component B both call getTopTracks()
+ * in the same render cycle, only one request fires.
+ * Both receive the same promise.
+ *
+ * Critical for Dev Mode — Spotify rate limits are tighter.
+ * Dedup prevents wasting quota on duplicate calls.
+ */</code></pre></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- REACT -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="react">
+    <div class="card">
+      <h3>Provider</h3>
+      <div class="code"><div class="code-head">@tastify/react — provider.tsx</div><pre><code>interface TastifyProviderProps {
+  /**
+   * URL of your token endpoint.
+   * Provider calls this to get + refresh tokens automatically.
+   * Simplest setup path.
+   */
+  tokenUrl?: string
+
+  /**
+   * Or provide a custom getToken function.
+   */
+  getToken?: () =&gt; Promise&lt;string&gt;
+
+  /**
+   * Or a static token (dev/testing only, expires in 1hr).
+   */
+  token?: string
+
+  /** Override default cache TTLs. */
+  cacheTTL?: TastifyConfig['cacheTTL']
+
+  children: React.ReactNode
+}
+
+// Usage — the simple case (most developers)
+&lt;TastifyProvider tokenUrl="/api/spotify/token"&gt;
+  &lt;App /&gt;
+&lt;/TastifyProvider&gt;
+
+// Usage — custom token management
+&lt;TastifyProvider getToken={async () =&gt; {
+  const res = await fetch('/api/spotify/token')
+  const { access_token } = await res.json()
+  return access_token
+}}&gt;
+  &lt;App /&gt;
+&lt;/TastifyProvider&gt;</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Hooks</h3>
+      <div class="code"><div class="code-head">@tastify/react — hooks</div><pre><code>// All hooks return DataState&lt;T&gt; — a discriminated union.
+// Components pattern-match on status for loading/error/success.
+
+function useNowPlaying(opts?: {
+  /** Poll interval in ms. Default 15000. Set 0 to disable. */
+  pollInterval?: number
+}): DataState&lt;NowPlayingData&gt;
+
+function useTopTracks(opts?: {
+  timeRange?: TimeRange     // default 'medium_term'
+  limit?: number            // default 10
+}): DataState&lt;TopTracksData&gt;
+
+function useTopArtists(opts?: {
+  timeRange?: TimeRange
+  limit?: number
+}): DataState&lt;TopArtistsData&gt;
+
+function useRecentlyPlayed(opts?: {
+  limit?: number
+}): DataState&lt;RecentlyPlayedData&gt;
+
+
+// ── Example usage ──────────────────────────────────
+
+function MyWidget() {
+  const state = useNowPlaying({ pollInterval: 10_000 })
+
+  if (state.status !== 'success' || !state.data) return null
+
+  const { track, isPlaying, progressMs } = state.data
+  return (
+    &lt;div className="my-player"&gt;
+      &lt;img src={track.album.images[0]?.url} /&gt;
+      &lt;span&gt;{track.name}&lt;/span&gt;
+      &lt;span&gt;{track.artists[0].name}&lt;/span&gt;
+    &lt;/div&gt;
+  )
+}</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Pre-styled Components</h3>
+      <div class="code"><div class="code-head">@tastify/react — components</div><pre><code>// Ship with beautiful defaults via CSS custom properties.
+// Every visual aspect is overridable.
+
+interface NowPlayingProps {
+  pollInterval?: number        // default 15_000
+  showArt?: boolean            // default true
+  showProgress?: boolean       // default true
+  showLink?: boolean           // default true — Spotify link icon
+  compact?: boolean            // default false — single-line mode
+  fallback?: React.ReactNode   // render when nothing is playing
+  className?: string
+}
+
+&lt;NowPlaying /&gt;
+&lt;NowPlaying compact fallback={&lt;p&gt;Not listening&lt;/p&gt;} /&gt;
+&lt;NowPlaying showProgress={false} className="my-override" /&gt;
+
+
+interface TopTracksProps {
+  timeRange?: TimeRange
+  limit?: number               // default 5
+  layout?: 'list' | 'grid'    // 'list' = numbered, 'grid' = album cards
+  showRank?: boolean           // default true (list only)
+  showArt?: boolean            // default true
+  columns?: number             // default 3 (grid only)
+  header?: string | null       // default "On Repeat" — null hides
+  showTimeRangeSelector?: boolean  // default false
+  className?: string
+}
+
+&lt;TopTracks /&gt;
+&lt;TopTracks layout="grid" columns={4} limit={8} /&gt;
+&lt;TopTracks header="What I've been listening to" showTimeRangeSelector /&gt;
+
+
+interface TopArtistsProps {
+  timeRange?: TimeRange
+  limit?: number
+  layout?: 'grid' | 'list'    // default 'grid'
+  columns?: number             // default 3
+  showGenres?: boolean         // default false
+  header?: string | null       // default "Top Artists"
+  showTimeRangeSelector?: boolean
+  className?: string
+}
+
+&lt;TopArtists /&gt;
+&lt;TopArtists layout="list" showGenres limit={5} /&gt;
+
+
+interface RecentlyPlayedProps {
+  limit?: number
+  layout?: 'timeline' | 'list'  // default 'list'
+  showTimestamp?: boolean        // default true — "2h ago"
+  groupByDay?: boolean           // default false
+  header?: string | null
+  className?: string
+}
+
+&lt;RecentlyPlayed /&gt;
+&lt;RecentlyPlayed layout="timeline" groupByDay /&gt;
+
+
+// ── Headless mode ──────────────────────────────────
+// Every component accepts children-as-function for full control.
+
+&lt;NowPlaying&gt;
+  {({ track, isPlaying, progressMs }) =&gt; (
+    &lt;div className="custom"&gt;{/* your own markup */}&lt;/div&gt;
+  )}
+&lt;/NowPlaying&gt;
+
+&lt;TopTracks timeRange="short_term" limit={5}&gt;
+  {({ tracks }) =&gt; (
+    &lt;ol&gt;
+      {tracks.map(t =&gt; &lt;li key={t.id}&gt;{t.name}&lt;/li&gt;)}
+    &lt;/ol&gt;
+  )}
+&lt;/TopTracks&gt;</code></pre></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- VANILLA -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="vanilla">
+    <div class="card">
+      <h3>Imperative Mount API</h3>
+      <div class="code"><div class="code-head">@tastify/vanilla — mount</div><pre><code>import { mount } from '@tastify/vanilla'
+
+// ── Basic mount ──────────────────────────────────
+
+const widget = mount('#now-playing', {
+  type: 'now-playing',
+  tokenUrl: '/api/spotify/token',
+})
+
+widget.destroy()  // unmount + cleanup
+
+
+// ── All widget types ─────────────────────────────
+
+mount('#np', {
+  type: 'now-playing',
+  tokenUrl: '/api/spotify/token',
+  compact: true,
+  showProgress: false,
+  fallback: '&lt;span&gt;Offline&lt;/span&gt;',
+  pollInterval: 20_000,
+})
+
+mount('#top', {
+  type: 'top-tracks',
+  tokenUrl: '/api/spotify/token',
+  timeRange: 'short_term',
+  limit: 5,
+  layout: 'list',
+  header: 'On Repeat',
+})
+
+mount('#artists', {
+  type: 'top-artists',
+  tokenUrl: '/api/spotify/token',
+  limit: 6,
+  layout: 'grid',
+  columns: 3,
+})
+
+mount('#recent', {
+  type: 'recently-played',
+  tokenUrl: '/api/spotify/token',
+  limit: 10,
+  layout: 'timeline',
+  showTimestamp: true,
+})</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Auto-initialization (Zero JS Authoring)</h3>
+      <div class="code"><div class="code-head">HTML — data-attribute API</div><pre><code>&lt;!-- Include the script (CDN or bundled) --&gt;
+&lt;script
+  src="https://unpkg.com/@tastify/vanilla"
+  data-tastify-token-url="/api/spotify/token"
+&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="https://unpkg.com/@tastify/vanilla/styles.css" /&gt;
+
+&lt;!-- Widgets auto-initialize from data attributes --&gt;
+
+&lt;div
+  data-tastify="now-playing"
+  data-compact="true"
+  data-show-progress="true"
+&gt;&lt;/div&gt;
+
+&lt;div
+  data-tastify="top-tracks"
+  data-time-range="short_term"
+  data-limit="5"
+  data-layout="list"
+  data-header="On Repeat"
+&gt;&lt;/div&gt;
+
+&lt;div
+  data-tastify="top-artists"
+  data-limit="6"
+  data-layout="grid"
+&gt;&lt;/div&gt;
+
+&lt;div
+  data-tastify="recently-played"
+  data-limit="10"
+  data-layout="timeline"
+&gt;&lt;/div&gt;
+
+&lt;!--
+  That's it. No JS to write.
+  The script scans for [data-tastify] on DOMContentLoaded,
+  reads the global tokenUrl from the script tag, and mounts.
+--&gt;</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Headless / Data-only (use Core directly)</h3>
+      <div class="code"><div class="code-head">@tastify/core — framework-agnostic usage</div><pre><code>import { TastifyClient } from '@tastify/core'
+
+const client = new TastifyClient({
+  getToken: async () =&gt; {
+    const res = await fetch('/api/spotify/token')
+    return (await res.json()).access_token
+  }
+})
+
+// Use in any context: vanilla JS, Svelte, Vue, Solid, etc.
+const np = await client.getNowPlaying()
+if (np) {
+  document.querySelector('#track').textContent = np.track.name
+  document.querySelector('#artist').textContent =
+    np.track.artists.map(a =&gt; a.name).join(', ')
+  document.querySelector('#art').src =
+    np.track.album.images[0]?.url
+}
+
+// Live updates
+const unsub = client.onNowPlayingChange((data) =&gt; {
+  data ? updateUI(data) : showOfflineState()
+})
+
+// Cleanup
+unsub()
+client.destroy()</code></pre></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- THEMING -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="theming">
+    <div class="card">
+      <h3>CSS Custom Properties</h3>
+      <div class="code"><div class="code-head">tastify.css — theming API</div><pre><code>:root {
+  /* ── Colors ─────────────────────────────────── */
+  --tf-color-bg:             transparent;
+  --tf-color-surface:        #1a1a1a;
+  --tf-color-text-primary:   #f0f0f0;
+  --tf-color-text-secondary: #888888;
+  --tf-color-accent:         #1db954;
+  --tf-color-border:         #2a2a2a;
+
+  /* ── Typography ─────────────────────────────── */
+  --tf-font-family:          inherit;  /* uses YOUR site's font */
+  --tf-font-size-sm:         0.8125rem;
+  --tf-font-size-base:       0.875rem;
+  --tf-font-size-lg:         1rem;
+  --tf-font-weight-normal:   400;
+  --tf-font-weight-medium:   500;
+  --tf-font-weight-bold:     600;
+
+  /* ── Spacing ────────────────────────────────── */
+  --tf-space-xs:             0.25rem;
+  --tf-space-sm:             0.5rem;
+  --tf-space-md:             0.75rem;
+  --tf-space-lg:             1rem;
+  --tf-space-xl:             1.5rem;
+
+  /* ── Layout ─────────────────────────────────── */
+  --tf-radius:               8px;
+  --tf-art-size:             48px;
+  --tf-art-radius:           4px;
+  --tf-grid-gap:             1rem;
+
+  /* ── Animation ──────────────────────────────── */
+  --tf-transition-speed:     200ms;
+  --tf-pulse-color:          #1db954;
+}
+
+/* Light theme override */
+[data-theme="light"] {
+  --tf-color-surface:        #f8f8f8;
+  --tf-color-text-primary:   #1a1a1a;
+  --tf-color-text-secondary: #666666;
+  --tf-color-border:         #e0e0e0;
+}
+
+/* Transparent blend mode — no card background */
+.tastify-transparent {
+  --tf-color-surface:        transparent;
+  --tf-color-border:         transparent;
+}</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Component Classes (BEM)</h3>
+      <div class="code"><div class="code-head">Flat, predictable class structure — no CSS-in-JS</div><pre><code>.tf-now-playing                /* root container */
+.tf-now-playing--compact       /* modifier: compact mode */
+.tf-now-playing--idle          /* modifier: nothing playing */
+.tf-now-playing__art           /* album artwork */
+.tf-now-playing__info          /* text container */
+.tf-now-playing__track         /* track name */
+.tf-now-playing__artist        /* artist name */
+.tf-now-playing__progress      /* progress bar container */
+.tf-now-playing__progress-bar  /* progress bar fill */
+.tf-now-playing__pulse         /* animated "playing" indicator */
+.tf-now-playing__link          /* spotify external link */
+
+.tf-top-tracks
+.tf-top-tracks--list
+.tf-top-tracks--grid
+.tf-top-tracks__header
+.tf-top-tracks__range-selector
+.tf-top-tracks__item
+.tf-top-tracks__rank
+.tf-top-tracks__art
+.tf-top-tracks__track
+.tf-top-tracks__artist
+
+.tf-top-artists
+.tf-top-artists--grid
+.tf-top-artists--list
+.tf-top-artists__item
+.tf-top-artists__photo
+.tf-top-artists__name
+.tf-top-artists__genres
+
+.tf-recently-played
+.tf-recently-played--timeline
+.tf-recently-played--list
+.tf-recently-played__item
+.tf-recently-played__timestamp
+.tf-recently-played__day-header</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Design Rationale</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>font-family: inherit</strong>
+          <p>Widgets should feel native to the host site. Inheriting typography is the single biggest factor in visual cohesion.</p>
+        </div>
+        <div class="info-item">
+          <strong>BEM classes, not CSS-in-JS</strong>
+          <p>Must work in vanilla HTML with a single stylesheet import. CSS-in-JS requires a runtime. BEM gives targeting precision without tooling.</p>
+        </div>
+        <div class="info-item">
+          <strong>Transparent bg default</strong>
+          <p>Widgets should feel embedded, not floating. Surface color is opt-in for devs who want a card look.</p>
+        </div>
+        <div class="info-item">
+          <strong>Spotify green as accent only</strong>
+          <p>Per Spotify's design guidelines, don't replicate their UI. Green is a subtle accent (progress bar, pulse dot), not the theme.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- SERVER -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="server">
+    <div class="card">
+      <h3>CLI Setup Flow</h3>
+      <div class="code"><div class="code-head">Terminal</div><pre><code>$ npx tastify init
+
+  ╭──────────────────────────────────────────╮
+  │                                          │
+  │   tastify — Spotify widget setup         │
+  │                                          │
+  ╰──────────────────────────────────────────╯
+
+  ? Spotify Client ID: ______________________
+  ? Deployment platform:
+    ❯ Vercel (serverless function)
+      Netlify (edge function)
+      Cloudflare Workers
+      Generic Express / Node
+
+  ▸ Opening browser for Spotify authorization...
+  ✓ Authorized! Refresh token obtained.
+
+  ▸ Writing serverless function...
+    → api/spotify/token.ts
+
+  ▸ Writing environment variables...
+    → .env.local (add these to your deploy platform):
+      SPOTIFY_CLIENT_ID=abc123...
+      SPOTIFY_CLIENT_SECRET=xyz789...
+      SPOTIFY_REFRESH_TOKEN=AQD...
+
+  ✓ Done! Add env vars to your platform and deploy.
+    Token endpoint lives at /api/spotify/token</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Reference: Vercel Serverless Function</h3>
+      <div class="code"><div class="code-head">api/spotify/token.ts — generated by npx tastify init</div><pre><code>const TOKEN_ENDPOINT = 'https://accounts.spotify.com/api/token'
+
+let cachedToken: string | null = null
+let cachedExpiry = 0
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin',
+    process.env.ALLOWED_ORIGIN || '*')
+  res.setHeader('Access-Control-Allow-Methods', 'GET')
+  res.setHeader('Cache-Control', 'no-store')
+
+  if (req.method === 'OPTIONS') return res.status(204).end()
+
+  // Serve cached token if still valid (5min buffer)
+  const now = Date.now()
+  if (cachedToken &amp;&amp; cachedExpiry - now &gt; 300_000) {
+    return res.json({
+      access_token: cachedToken,
+      expires_in: Math.floor((cachedExpiry - now) / 1000),
+    })
+  }
+
+  // Refresh from Spotify
+  const params = new URLSearchParams({
+    grant_type: 'refresh_token',
+    refresh_token: process.env.SPOTIFY_REFRESH_TOKEN!,
+    client_id: process.env.SPOTIFY_CLIENT_ID!,
+    client_secret: process.env.SPOTIFY_CLIENT_SECRET!,
+  })
+
+  const response = await fetch(TOKEN_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: params.toString(),
+  })
+
+  if (!response.ok) {
+    return res.status(502).json({ error: 'Token refresh failed' })
+  }
+
+  const data = await response.json()
+  cachedToken = data.access_token
+  cachedExpiry = now + data.expires_in * 1000
+
+  // Spotify may rotate the refresh token
+  if (data.refresh_token) {
+    console.warn(
+      '[tastify] Spotify rotated refresh token.',
+      'Update SPOTIFY_REFRESH_TOKEN env var.'
+    )
+  }
+
+  return res.json({
+    access_token: data.access_token,
+    expires_in: data.expires_in,
+  })
+}</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Security Notes</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>Never expose the refresh token</strong>
+          <p>The serverless fn keeps client_secret and refresh_token server-side. The browser only sees short-lived access tokens.</p>
+        </div>
+        <div class="info-item">
+          <strong>CORS lock-down</strong>
+          <p>Set ALLOWED_ORIGIN to your domain in production. Defaults to * for dev but flags this for tightening.</p>
+        </div>
+        <div class="info-item">
+          <strong>Rate limiting is built-in</strong>
+          <p>Server-side token caching means even high-traffic sites make at most 1 Spotify call per hour. Visitors don't each trigger a refresh.</p>
+        </div>
+        <div class="info-item">
+          <strong>Token rotation handling</strong>
+          <p>Spotify can rotate refresh tokens. The function logs a warning. A future CLI command could auto-update the env var.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- DX -->
+  <!-- ═══════════════════════════════════════════ -->
+  <div class="section" id="dx">
+    <div class="card">
+      <h3>Quickstart — React (Next.js / Astro)</h3>
+      <div class="code"><div class="code-head">Full integration in ~15 lines</div><pre><code>// 1. Install
+npm install @tastify/react
+
+// 2. Add provider (layout.tsx or _app.tsx)
+import { TastifyProvider } from '@tastify/react'
+import '@tastify/react/styles'
+
+export default function Layout({ children }) {
+  return (
+    &lt;TastifyProvider tokenUrl="/api/spotify/token"&gt;
+      {children}
+    &lt;/TastifyProvider&gt;
+  )
+}
+
+// 3. Drop in components anywhere
+import { NowPlaying, TopTracks } from '@tastify/react'
+
+export function AboutPage() {
+  return (
+    &lt;section&gt;
+      &lt;h2&gt;What I'm listening to&lt;/h2&gt;
+      &lt;NowPlaying /&gt;
+      &lt;TopTracks header="On Repeat" timeRange="short_term" limit={5} /&gt;
+    &lt;/section&gt;
+  )
+}</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Quickstart — Static HTML (Astro, Hugo, Jekyll)</h3>
+      <div class="code"><div class="code-head">Full integration in ~10 lines</div><pre><code>&lt;!-- 1. Script + styles --&gt;
+&lt;script
+  src="https://unpkg.com/@tastify/vanilla"
+  data-tastify-token-url="/api/spotify/token"
+&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="https://unpkg.com/@tastify/vanilla/styles.css" /&gt;
+
+&lt;!-- 2. Drop in widgets --&gt;
+&lt;h2&gt;What I'm listening to&lt;/h2&gt;
+
+&lt;div data-tastify="now-playing"&gt;&lt;/div&gt;
+
+&lt;div
+  data-tastify="top-tracks"
+  data-header="On Repeat"
+  data-time-range="short_term"
+  data-limit="5"
+&gt;&lt;/div&gt;</code></pre></div>
+    </div>
+
+    <div class="card">
+      <h3>Bundle Size Budget</h3>
+      <div class="size-table">
+        <div class="size-row h"><span>Package</span><span>Raw</span><span>Gzip</span></div>
+        <div class="size-row"><span><code>@tastify/core</code></span><span>~8kb</span><span class="size-val">~2.5kb</span></div>
+        <div class="size-row"><span><code>@tastify/react</code></span><span>~14kb</span><span class="size-val">~4.5kb</span></div>
+        <div class="size-row"><span><code>@tastify/vanilla</code></span><span>~11kb</span><span class="size-val">~3.5kb</span></div>
+        <div class="size-row"><span><code>@tastify/react</code> headless</span><span>~10kb</span><span class="size-val">~3kb</span></div>
+      </div>
+      <p class="size-note">Target: total cost of a NowPlaying widget under 5kb gzip. For reference, react-spotify-web-playback ships at ~45kb.</p>
+    </div>
+
+    <div class="card">
+      <h3>Future Scope</h3>
+      <div class="info-grid">
+        <div class="info-item">
+          <strong>@tastify/web-components</strong>
+          <p>Custom elements (&lt;tastify-now-playing&gt;) via shadow DOM. Same core, zero framework dep. Great for WordPress, Hugo, plain HTML.</p>
+        </div>
+        <div class="info-item">
+          <strong>@tastify/astro</strong>
+          <p>Astro integration with SSR-rendered stale data + client-side hydration for live updates. Island architecture native.</p>
+        </div>
+        <div class="info-item">
+          <strong>Apple Music / Last.fm adapters</strong>
+          <p>Same component API, different data source. Core abstracts the provider, making components music-service-agnostic.</p>
+        </div>
+        <div class="info-item">
+          <strong>Visual theme presets</strong>
+          <p>Curated themes — vinyl, terminal, album-art-dominant, minimal, glassmorphism — toggled via a single CSS class.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Tab navigation
+  const nav = document.getElementById('nav')
+  const buttons = nav.querySelectorAll('button')
+  const sections = document.querySelectorAll('.section')
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.section
+      buttons.forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      sections.forEach(s => {
+        s.classList.remove('active')
+        if (s.id === target) s.classList.add('active')
+      })
+    })
+  })
+
+  // Sticky nav border on scroll
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('scrolled', window.scrollY > 120)
+  })
+</script>
+</body>
+</html>

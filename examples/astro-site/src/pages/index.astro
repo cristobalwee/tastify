@@ -1,0 +1,33 @@
+---
+// No component imports needed — tastify vanilla uses data attributes
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>tastify + Astro</title>
+    <link rel="stylesheet" href="https://unpkg.com/@tastify/vanilla/dist/styles.css" />
+    <style>
+      body {
+        background: #0a0a0a;
+        color: #f0f0f0;
+        font-family: system-ui, sans-serif;
+        max-width: 600px;
+        margin: 4rem auto;
+        padding: 0 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>My Music</h1>
+
+    <div data-tastify="now-playing"></div>
+
+    <div data-tastify="top-tracks" data-limit="5" style="margin-top: 2rem;"></div>
+
+    <div data-tastify="top-artists" data-limit="5" data-layout="grid" data-columns="3" style="margin-top: 2rem;"></div>
+
+    <script src="https://unpkg.com/@tastify/vanilla" data-tastify-token-url="/api/spotify/token"></script>
+  </body>
+</html>
