@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import type { TopArtistsData, DataState, TimeRange } from '@tastify/core';
 import { TastifyError } from '@tastify/core';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type ReactNode } from 'react';
 import type { TopArtistsData, TimeRange } from '@tastify/core';
 import { useTopArtists } from '../hooks/useTopArtists.js';

@@ -47,7 +47,7 @@ async function runOAuth(
   clientId: string,
   clientSecret: string,
   redirectUri: string
-): Promise<string> {
+): Promise<{ access_token: string; refresh_token: string }> {
   const redirectUrl = new URL(redirectUri)
   const port = parseInt(redirectUrl.port, 10) || 3000
 
@@ -98,7 +98,7 @@ async function runOAuth(
         res.writeHead(200, { 'Content-Type': 'text/html' })
         res.end('<html><body><h2>Authorized!</h2><p>You can close this tab and return to the terminal.</p></body></html>')
         cleanup()
-        resolve(data.refresh_token)
+        resolve(data)
       } catch (err) {
         res.writeHead(500, { 'Content-Type': 'text/html' })
         res.end('<html><body><h2>Token exchange failed.</h2><p>Check the terminal for details.</p></body></html>')
@@ -203,10 +203,10 @@ async function main() {
   console.log()
   console.log(pc.dim('  Starting OAuth flow...'))
 
-  let refreshToken: string
+  let tokens: { access_token: string; refresh_token: string }
   try {
-    refreshToken = await runOAuth(clientId.trim(), clientSecret.trim(), redirectUri.trim())
-    console.log(pc.green('  ✓ Authorized! Refresh token obtained.'))
+    tokens = await runOAuth(clientId.trim(), clientSecret.trim(), redirectUri.trim())
+    console.log(pc.green('  ✓ Authorized! Tokens obtained.'))
   } catch (err) {
     console.error(pc.red(`  ✗ OAuth failed: ${err instanceof Error ? err.message : String(err)}`))
     process.exit(1)
@@ -226,7 +226,7 @@ async function main() {
   const envFile = platform.value === 'cloudflare' ? '.env' : '.env.local'
   const envContent = `SPOTIFY_CLIENT_ID=${clientId.trim()}
 SPOTIFY_CLIENT_SECRET=${clientSecret.trim()}
-SPOTIFY_REFRESH_TOKEN=${refreshToken}
+SPOTIFY_REFRESH_TOKEN=${tokens.refresh_token}
 `
 
   try {
@@ -242,6 +242,10 @@ SPOTIFY_REFRESH_TOKEN=${refreshToken}
   console.log(pc.green(pc.bold('  ✓ Done!')) + ' Files created:')
   console.log(pc.dim(`    → ${platform.filePath}`))
   console.log(pc.dim(`    → ${envFile}`))
+  console.log()
+  console.log(pc.bold('  Access token (expires in ~1 hour):'))
+  console.log()
+  console.log(`  ${tokens.access_token}`)
   console.log()
   console.log('  Next steps:')
   console.log('  1. Add the env vars to your deployment platform')

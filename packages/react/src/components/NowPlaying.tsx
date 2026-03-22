@@ -1,3 +1,5 @@
+'use client';
+
 import type { ReactNode } from 'react';
 import type { NowPlayingData } from '@tastify/core';
 import { useNowPlaying } from '../hooks/useNowPlaying.js';

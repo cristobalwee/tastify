@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import type { RecentlyPlayedData, DataState } from '@tastify/core';
 import { TastifyError } from '@tastify/core';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import type { NowPlayingData, DataState } from '@tastify/core';
 import { TastifyError } from '@tastify/core';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, type ReactNode } from 'react';
 import type { TopTracksData, TimeRange } from '@tastify/core';
 import { useTopTracks } from '../hooks/useTopTracks.js';
