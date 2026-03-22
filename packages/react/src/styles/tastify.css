@@ -175,6 +175,8 @@
   gap: var(--tf-space-xs);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tf-track-card--grid .tf-track-card__art {
@@ -182,6 +184,7 @@
   height: auto;
   aspect-ratio: 1;
   border-radius: var(--tf-radius);
+  object-fit: cover;
 }
 
 /* ── TopTracks ──────────────────────────────────── */
@@ -223,6 +226,11 @@
 .tf-top-tracks--grid .tf-top-tracks__list {
   display: grid;
   gap: var(--tf-grid-gap);
+  min-width: 0;
+}
+
+.tf-top-tracks--grid .tf-top-tracks__list > * {
+  min-width: 0;
 }
 
 /* ── ArtistCard ─────────────────────────────────── */
@@ -235,6 +243,8 @@
   text-align: center;
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .tf-artist-card__photo {
@@ -242,6 +252,7 @@
   aspect-ratio: 1;
   object-fit: cover;
   flex-shrink: 0;
+  max-width: 100%;
 }
 
 .tf-artist-card--grid .tf-artist-card__photo {
@@ -327,6 +338,11 @@
 .tf-top-artists--grid .tf-top-artists__list {
   display: grid;
   gap: var(--tf-grid-gap);
+  min-width: 0;
+}
+
+.tf-top-artists--grid .tf-top-artists__list > * {
+  min-width: 0;
 }
 
 /* ── RecentlyPlayed ─────────────────────────────── */
