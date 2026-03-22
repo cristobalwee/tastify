@@ -26,6 +26,15 @@
   --tf-pulse-color: #1db954;
 }
 
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --tf-color-surface: #1a1a1a;
+    --tf-color-text-primary: #f0f0f0;
+    --tf-color-text-secondary: #888888;
+    --tf-color-border: #2a2a2a;
+  }
+} */
+
 /* ── NowPlaying ─────────────────────────────────── */
 
 .tf-now-playing {

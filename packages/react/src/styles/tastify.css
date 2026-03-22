@@ -1,10 +1,10 @@
 :root {
   --tf-color-bg: transparent;
-  --tf-color-surface: #1a1a1a;
-  --tf-color-text-primary: #f0f0f0;
-  --tf-color-text-secondary: #888888;
+  --tf-color-surface: #f5f5f5;
+  --tf-color-text-primary: #1a1a1a;
+  --tf-color-text-secondary: #555555;
   --tf-color-accent: #1db954;
-  --tf-color-border: #2a2a2a;
+  --tf-color-border: #e0e0e0;
   --tf-font-family: inherit;
   --tf-font-size-sm: 0.8125rem;
   --tf-font-size-base: 0.875rem;
@@ -24,6 +24,15 @@
   --tf-transition-speed: 200ms;
   --tf-pulse-color: #1db954;
 }
+
+/* @media (prefers-color-scheme: dark) {
+  :root {
+    --tf-color-surface: #1a1a1a;
+    --tf-color-text-primary: #f0f0f0;
+    --tf-color-text-secondary: #888888;
+    --tf-color-border: #2a2a2a;
+  }
+} */
 
 /* ── NowPlaying ─────────────────────────────────── */
 
