@@ -1,18 +1,20 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
-import { TastifyProvider } from '@tastify/react';
+import { TastifyProvider, PlaybackProvider, PlaybackOverlay, type ToastPosition } from '@tastify/react';
 import '@tastify/react/styles.css';
 import { NowPlayingSection } from './sections/NowPlayingSection';
 import { TopTracksSection } from './sections/TopTracksSection';
 import { TopArtistsSection } from './sections/TopArtistsSection';
 import { RecentlyPlayedSection } from './sections/RecentlyPlayedSection';
+import { PlaybackSection } from './sections/PlaybackSection';
 
-type Section = 'now-playing' | 'top-tracks' | 'top-artists' | 'recently-played';
+type Section = 'now-playing' | 'top-tracks' | 'top-artists' | 'recently-played' | 'playback';
 
 const NAV_ITEMS: { id: Section; label: string }[] = [
   { id: 'now-playing', label: 'NowPlaying' },
   { id: 'top-tracks', label: 'TopTracks' },
   { id: 'top-artists', label: 'TopArtists' },
   { id: 'recently-played', label: 'RecentlyPlayed' },
+  { id: 'playback', label: 'Playback' },
 ];
 
 function LoginPage({ onConnect }: { onConnect: (token: string) => void }) {
@@ -134,6 +136,8 @@ export function App() {
   const [activeToken, setActiveToken] = useState('');
   const [section, setSection] = useState<Section>('now-playing');
   const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const [playbackUi, setPlaybackUi] = useState<'bar' | 'toast'>('bar');
+  const [toastPosition, setToastPosition] = useState<ToastPosition>('bottom-right');
 
   const handleConnect = useCallback((token: string) => {
     setActiveToken(token);
@@ -190,10 +194,21 @@ export function App() {
         <div className="showcase__main-wrapper">
           <main className="showcase__main">
             <TastifyProvider token={activeToken}>
-              {section === 'now-playing' && <NowPlayingSection />}
-              {section === 'top-tracks' && <TopTracksSection />}
-              {section === 'top-artists' && <TopArtistsSection />}
-              {section === 'recently-played' && <RecentlyPlayedSection />}
+              <PlaybackProvider ui={playbackUi} toastPosition={toastPosition}>
+                {section === 'now-playing' && <NowPlayingSection />}
+                {section === 'top-tracks' && <TopTracksSection />}
+                {section === 'top-artists' && <TopArtistsSection />}
+                {section === 'recently-played' && <RecentlyPlayedSection />}
+                {section === 'playback' && (
+                  <PlaybackSection
+                    ui={playbackUi}
+                    toastPosition={toastPosition}
+                    onUiChange={setPlaybackUi}
+                    onPositionChange={setToastPosition}
+                  />
+                )}
+                <PlaybackOverlay />
+              </PlaybackProvider>
             </TastifyProvider>
           </main>
         </div>

@@ -56,10 +56,19 @@ export interface RecentlyPlayedOptions {
 function renderTrackCard(
   track: TastifyTrack,
   layout: 'list' | 'grid',
-  opts: { rank?: number; showArt?: boolean },
+  opts: { rank?: number; showArt?: boolean; onPlay?: (track: TastifyTrack) => void },
 ): HTMLElement {
   const art = track.album.images[0]?.url;
   const artistNames = track.artists.map((a) => a.name).join(', ');
+  const playable = !!opts.onPlay;
+
+  function buildClasses(base: string): string {
+    const parts = [base];
+    if (playable) parts.push('tf-track-card--playable');
+    return parts.join(' ');
+  }
+
+  let el: HTMLElement;
 
   if (layout === 'grid') {
     const children: (HTMLElement | Text)[] = [];
@@ -75,38 +84,61 @@ function renderTrackCard(
     }
     children.push(h('span', { class: 'tf-track-card__name' }, [track.name]));
     children.push(h('span', { class: 'tf-track-card__artist' }, [artistNames]));
-    return h('div', { class: 'tf-track-card tf-track-card--grid' }, children);
+    el = h('div', { class: buildClasses('tf-track-card tf-track-card--grid') }, children);
+  } else {
+    const children: (HTMLElement | Text)[] = [];
+    if (opts.rank != null) {
+      children.push(h('span', { class: 'tf-track-card__rank' }, [String(opts.rank)]));
+    }
+    if (opts.showArt !== false && art) {
+      children.push(
+        h('img', {
+          class: 'tf-track-card__art',
+          src: art,
+          alt: track.album.name,
+          loading: 'lazy',
+        }),
+      );
+    }
+    children.push(
+      h('div', { class: 'tf-track-card__info' }, [
+        h('span', { class: 'tf-track-card__name' }, [track.name]),
+        h('span', { class: 'tf-track-card__artist' }, [artistNames]),
+      ]),
+    );
+    el = h('div', { class: buildClasses('tf-track-card tf-track-card--list') }, children);
   }
 
-  const children: (HTMLElement | Text)[] = [];
-  if (opts.rank != null) {
-    children.push(h('span', { class: 'tf-track-card__rank' }, [String(opts.rank)]));
+  if (opts.onPlay) {
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    const onPlay = opts.onPlay;
+    el.addEventListener('click', () => onPlay(track));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onPlay(track);
+      }
+    });
   }
-  if (opts.showArt !== false && art) {
-    children.push(
-      h('img', {
-        class: 'tf-track-card__art',
-        src: art,
-        alt: track.album.name,
-        loading: 'lazy',
-      }),
-    );
-  }
-  children.push(
-    h('div', { class: 'tf-track-card__info' }, [
-      h('span', { class: 'tf-track-card__name' }, [track.name]),
-      h('span', { class: 'tf-track-card__artist' }, [artistNames]),
-    ]),
-  );
-  return h('div', { class: 'tf-track-card tf-track-card--list' }, children);
+
+  return el;
 }
 
 function renderArtistCard(
   artist: TastifyArtist,
   layout: 'grid' | 'list',
   showGenres: boolean,
+  onPlay?: (artist: TastifyArtist) => void,
 ): HTMLElement {
   const photo = artist.images[0]?.url;
+  const playable = !!onPlay;
+
+  function buildClasses(base: string): string {
+    const parts = [base];
+    if (playable) parts.push('tf-artist-card--playable');
+    return parts.join(' ');
+  }
 
   function genresEl(): HTMLElement | null {
     if (!showGenres || artist.genres.length === 0) return null;
@@ -116,6 +148,8 @@ function renderArtistCard(
       artist.genres.slice(0, 3).map((g) => h('span', { class: 'tf-artist-card__genre' }, [g])),
     );
   }
+
+  let el: HTMLElement;
 
   if (layout === 'grid') {
     const children: (HTMLElement | Text)[] = [];
@@ -127,22 +161,37 @@ function renderArtistCard(
     children.push(h('span', { class: 'tf-artist-card__name' }, [artist.name]));
     const genres = genresEl();
     if (genres) children.push(genres);
-    return h('div', { class: 'tf-artist-card tf-artist-card--grid' }, children);
+    el = h('div', { class: buildClasses('tf-artist-card tf-artist-card--grid') }, children);
+  } else {
+    const children: (HTMLElement | Text)[] = [];
+    if (photo) {
+      children.push(
+        h('img', { class: 'tf-artist-card__photo', src: photo, alt: artist.name, loading: 'lazy' }),
+      );
+    }
+    const infoChildren: (HTMLElement | Text)[] = [
+      h('span', { class: 'tf-artist-card__name' }, [artist.name]),
+    ];
+    const genres = genresEl();
+    if (genres) infoChildren.push(genres);
+    children.push(h('div', { class: 'tf-artist-card__info' }, infoChildren));
+    el = h('div', { class: buildClasses('tf-artist-card tf-artist-card--list') }, children);
   }
 
-  const children: (HTMLElement | Text)[] = [];
-  if (photo) {
-    children.push(
-      h('img', { class: 'tf-artist-card__photo', src: photo, alt: artist.name, loading: 'lazy' }),
-    );
+  if (onPlay) {
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    const handler = onPlay;
+    el.addEventListener('click', () => handler(artist));
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handler(artist);
+      }
+    });
   }
-  const infoChildren: (HTMLElement | Text)[] = [
-    h('span', { class: 'tf-artist-card__name' }, [artist.name]),
-  ];
-  const genres = genresEl();
-  if (genres) infoChildren.push(genres);
-  children.push(h('div', { class: 'tf-artist-card__info' }, infoChildren));
-  return h('div', { class: 'tf-artist-card tf-artist-card--list' }, children);
+
+  return el;
 }
 
 function formatRelativeTime(dateStr: string): string {

@@ -39,6 +39,9 @@ export interface MountOptions {
   // RecentlyPlayed
   showTimestamp?: boolean;
   groupByDay?: boolean;
+  // Playback
+  onTrackPlay?: (track: import('@tastify/core').TastifyTrack) => void;
+  onArtistPlay?: (artist: import('@tastify/core').TastifyArtist) => void;
 }
 
 export interface MountedWidget {

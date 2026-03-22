@@ -7,6 +7,18 @@ export { NowPlaying, type NowPlayingProps } from './components/NowPlaying.js';
 export { TopTracks, type TopTracksProps } from './components/TopTracks.js';
 export { TopArtists, type TopArtistsProps } from './components/TopArtists.js';
 export { RecentlyPlayed, type RecentlyPlayedProps } from './components/RecentlyPlayed.js';
+export {
+  PlaybackProvider,
+  usePlayback,
+  PlaybackContext,
+  type PlaybackProviderProps,
+  type PlaybackConfig,
+  type PlaybackContextValue,
+  type ToastPosition,
+} from './playback.js';
+export { PlaybackBar } from './components/PlaybackBar.js';
+export { PlaybackToast, type PlaybackToastProps } from './components/PlaybackToast.js';
+export { PlaybackOverlay } from './components/PlaybackOverlay.js';
 export type {
   TastifyImage,
   TastifyAlbum,
@@ -20,5 +32,6 @@ export type {
   DataState,
   TastifyConfig,
   TastifyError,
+  PlaybackState,
   Poller,
 } from '@tastify/core';

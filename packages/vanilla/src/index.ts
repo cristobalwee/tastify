@@ -1,5 +1,7 @@
 export { mount } from './mount.js';
 export type { MountOptions, MountedWidget } from './mount.js';
+export { mountPlaybackBar, mountPlaybackToast } from './playback-mount.js';
+export type { PlaybackBarMountOptions, PlaybackToastMountOptions, PlaybackWidget } from './playback-mount.js';
 
 export type {
   TastifyImage,
@@ -13,5 +15,6 @@ export type {
   TimeRange,
   DataState,
   TastifyConfig,
+  PlaybackState,
 } from '@tastify/core';
-export { TastifyError } from '@tastify/core';
+export { TastifyError, getAudioPlayer } from '@tastify/core';

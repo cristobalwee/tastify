@@ -1,18 +1,56 @@
+import { useContext } from 'react';
 import type { TastifyTrack } from '@tastify/core';
+import { PlaybackContext } from '../playback.js';
 
 interface TrackCardProps {
   track: TastifyTrack;
   rank?: number;
   showArt?: boolean;
   layout: 'list' | 'grid';
+  onPlay?: (track: TastifyTrack) => void;
 }
 
-export function TrackCard({ track, rank, showArt = true, layout }: TrackCardProps) {
+export function TrackCard({ track, rank, showArt = true, layout, onPlay }: TrackCardProps) {
+  const playback = useContext(PlaybackContext);
   const art = track.album.images[0]?.url;
+
+  const isPlayable = !!(onPlay || playback);
+  const isPlaying = playback?.state.currentTrack?.id === track.id;
+
+  function handleClick() {
+    if (onPlay) {
+      onPlay(track);
+    } else if (playback) {
+      playback.play(track);
+    }
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  }
+
+  const interactiveProps = isPlayable
+    ? {
+        role: 'button' as const,
+        tabIndex: 0,
+        onClick: handleClick,
+        onKeyDown: handleKeyDown,
+      }
+    : {};
+
+  function cardCls(base: string): string {
+    const parts = [base];
+    if (isPlayable) parts.push('tf-track-card--playable');
+    if (isPlaying) parts.push('tf-track-card--playing');
+    return parts.join(' ');
+  }
 
   if (layout === 'grid') {
     return (
-      <div className="tf-track-card tf-track-card--grid">
+      <div className={cardCls('tf-track-card tf-track-card--grid')} {...interactiveProps}>
         {showArt && art && (
           <img
             className="tf-track-card__art"
@@ -30,7 +68,7 @@ export function TrackCard({ track, rank, showArt = true, layout }: TrackCardProp
   }
 
   return (
-    <div className="tf-track-card tf-track-card--list">
+    <div className={cardCls('tf-track-card tf-track-card--list')} {...interactiveProps}>
       {rank != null && <span className="tf-track-card__rank">{rank}</span>}
       {showArt && art && (
         <img

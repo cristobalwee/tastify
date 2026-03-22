@@ -202,3 +202,16 @@ export async function fetchRecentlyPlayed(
     fetchedAt: Date.now(),
   };
 }
+
+export async function fetchArtistTopTracks(
+  token: string,
+  artistId: string,
+  market: string = 'US',
+): Promise<TastifyTrack[]> {
+  const response = await spotifyFetch(
+    `/artists/${encodeURIComponent(artistId)}/top-tracks?market=${encodeURIComponent(market)}`,
+    token,
+  );
+  const raw: { tracks: RawTrack[] } = await response.json();
+  return raw.tracks.map(normalizeTrack);
+}

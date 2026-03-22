@@ -2,6 +2,13 @@ export { TastifyClient } from './client.js';
 export { createPoller } from './poller.js';
 export type { Poller } from './poller.js';
 export {
+  getAudioPlayer,
+  resetAudioPlayer,
+  type AudioPlayer,
+  type PlaybackState,
+  type PlaybackEvent,
+} from './audio-player.js';
+export {
   TastifyError,
   type TastifyImage,
   type TastifyAlbum,

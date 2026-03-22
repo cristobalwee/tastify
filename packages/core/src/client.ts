@@ -1,5 +1,6 @@
 import type {
   TastifyConfig,
+  TastifyTrack,
   NowPlayingData,
   TopTracksData,
   TopArtistsData,
@@ -13,6 +14,7 @@ import {
   fetchTopTracks,
   fetchTopArtists,
   fetchRecentlyPlayed,
+  fetchArtistTopTracks,
 } from './endpoints.js';
 import { createPoller, type Poller } from './poller.js';
 
@@ -129,6 +131,19 @@ export class TastifyClient {
       () => fetchRecentlyPlayed(token, limit),
       this.softTTL('recentlyPlayed'),
       this.hardTTL('recentlyPlayed'),
+    );
+  }
+
+  async getArtistTopTracks(
+    artistId: string,
+    opts?: { market?: string },
+  ): Promise<TastifyTrack[]> {
+    const token = await this.resolveToken();
+    return this.cache.getOrFetch(
+      `artist-top-tracks:${artistId}`,
+      () => fetchArtistTopTracks(token, artistId, opts?.market),
+      this.softTTL('topTracks'),
+      this.hardTTL('topTracks'),
     );
   }
 
