@@ -6,6 +6,7 @@ import { TopTracksSection } from './sections/TopTracksSection';
 import { TopArtistsSection } from './sections/TopArtistsSection';
 import { RecentlyPlayedSection } from './sections/RecentlyPlayedSection';
 import { PlaybackSection } from './sections/PlaybackSection';
+import { startOAuthFlow, handleOAuthCallback, getSavedClientId } from './oauth';
 
 type Section = 'now-playing' | 'top-tracks' | 'top-artists' | 'recently-played' | 'playback';
 
@@ -17,10 +18,24 @@ const NAV_ITEMS: { id: Section; label: string }[] = [
   { id: 'playback', label: 'Playback' },
 ];
 
-function LoginPage({ onConnect }: { onConnect: (token: string) => void }) {
+function LoginPage({ onConnect, oauthError }: { onConnect: (token: string) => void; oauthError?: string }) {
+  const [mode, setMode] = useState<'oauth' | 'token'>('oauth');
+  const [clientId, setClientId] = useState(getSavedClientId);
   const [token, setToken] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
+  const handleOAuth = async () => {
+    const trimmed = clientId.trim();
+    if (!trimmed) return;
+    setLoading(true);
+    try {
+      await startOAuthFlow(trimmed);
+    } catch {
+      setLoading(false);
+    }
+  };
+
+  const handleToken = () => {
     const trimmed = token.trim();
     if (trimmed) onConnect(trimmed);
   };
@@ -34,43 +49,106 @@ function LoginPage({ onConnect }: { onConnect: (token: string) => void }) {
         </div>
 
         <p className="login__description">
-          Connect with a Spotify access token to explore the component showcase.
-          Each component is interactive with live prop controls.
+          Connect with Spotify to explore the component showcase.
+          Full-track streaming requires a Spotify Premium account.
         </p>
 
-        <div className="login__form">
-          <label className="login__label" htmlFor="login-token">
-            Access Token
-          </label>
-          <input
-            id="login-token"
-            className="login__input"
-            type="password"
-            placeholder="Paste your Spotify access token..."
-            value={token}
-            onChange={(e) => setToken(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-            autoFocus
-          />
+        {oauthError && (
+          <p className="login__error">{oauthError}</p>
+        )}
+
+        <div className="login__tabs">
           <button
-            className="login__submit"
-            onClick={handleSubmit}
-            disabled={!token.trim()}
+            className={`login__tab${mode === 'oauth' ? ' login__tab--active' : ''}`}
+            onClick={() => setMode('oauth')}
           >
-            Connect
+            Spotify Login
+          </button>
+          <button
+            className={`login__tab${mode === 'token' ? ' login__tab--active' : ''}`}
+            onClick={() => setMode('token')}
+          >
+            Paste Token
           </button>
         </div>
 
+        {mode === 'oauth' ? (
+          <div className="login__form">
+            <label className="login__label" htmlFor="login-client-id">
+              Spotify Client ID
+            </label>
+            <input
+              id="login-client-id"
+              className="login__input"
+              type="text"
+              placeholder="Your app's Client ID from the Spotify Dashboard"
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleOAuth()}
+              autoFocus
+            />
+            <button
+              className="login__submit"
+              onClick={handleOAuth}
+              disabled={!clientId.trim() || loading}
+            >
+              {loading ? 'Redirecting...' : 'Login with Spotify'}
+            </button>
+            <p className="login__scope-info">
+              Requests scopes: <code>user-read-currently-playing</code>{' '}
+              <code>user-top-read</code> <code>streaming</code> and more.
+              Add <code>{window.location.origin}</code> as a Redirect URI in your{' '}
+              <a
+                href="https://developer.spotify.com/dashboard"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Spotify app settings
+              </a>.
+            </p>
+          </div>
+        ) : (
+          <div className="login__form">
+            <label className="login__label" htmlFor="login-token">
+              Access Token
+            </label>
+            <input
+              id="login-token"
+              className="login__input"
+              type="password"
+              placeholder="Paste your Spotify access token..."
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleToken()}
+              autoFocus
+            />
+            <button
+              className="login__submit"
+              onClick={handleToken}
+              disabled={!token.trim()}
+            >
+              Connect
+            </button>
+            <p className="login__scope-info">
+              For full-track playback, your token must include the{' '}
+              <code>streaming</code> and <code>user-modify-playback-state</code>{' '}
+              scopes. Without them, playback falls back to 30s previews (mostly
+              unavailable since Nov 2024). Use <code>npx tastify init</code> or
+              the Spotify Login tab to get a token with the right scopes.
+            </p>
+          </div>
+        )}
+
         <p className="login__help">
-          Generate a token from the{' '}
+          Need a Client ID?{' '}
           <a
-            href="https://developer.spotify.com/documentation/web-api/concepts/access-token"
+            href="https://developer.spotify.com/dashboard"
             target="_blank"
             rel="noopener noreferrer"
           >
-            Spotify Developer Docs
+            Create an app
           </a>{' '}
-          or run <code>npx tastify init</code> to get started.
+          in the Spotify Developer Dashboard.
         </p>
       </div>
     </div>
@@ -134,6 +212,7 @@ function TokenFlyout({
 
 export function App() {
   const [activeToken, setActiveToken] = useState('');
+  const [oauthError, setOauthError] = useState('');
   const [section, setSection] = useState<Section>('now-playing');
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const [playbackUi, setPlaybackUi] = useState<'bar' | 'toast'>('bar');
@@ -143,8 +222,18 @@ export function App() {
     setActiveToken(token);
   }, []);
 
+  useEffect(() => {
+    handleOAuthCallback()
+      .then((token) => {
+        if (token) setActiveToken(token);
+      })
+      .catch((err) => {
+        setOauthError(err instanceof Error ? err.message : String(err));
+      });
+  }, []);
+
   if (!activeToken) {
-    return <LoginPage onConnect={handleConnect} />;
+    return <LoginPage onConnect={handleConnect} oauthError={oauthError} />;
   }
 
   return (
@@ -194,7 +283,7 @@ export function App() {
         <div className="showcase__main-wrapper">
           <main className="showcase__main">
             <TastifyProvider token={activeToken}>
-              <PlaybackProvider ui={playbackUi} toastPosition={toastPosition}>
+              <PlaybackProvider ui={playbackUi} toastPosition={toastPosition} playbackMode="auto">
                 {section === 'now-playing' && <NowPlayingSection />}
                 {section === 'top-tracks' && <TopTracksSection />}
                 {section === 'top-artists' && <TopArtistsSection />}

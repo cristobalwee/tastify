@@ -12,7 +12,8 @@ import { expressTemplate, expressPath } from './templates/express.js'
 
 const SPOTIFY_AUTH_URL = 'https://accounts.spotify.com/authorize'
 const SPOTIFY_TOKEN_URL = 'https://accounts.spotify.com/api/token'
-const SCOPES = 'user-read-currently-playing user-read-recently-played user-top-read user-read-playback-state'
+const BASE_SCOPES = 'user-read-currently-playing user-read-recently-played user-top-read user-read-playback-state'
+const STREAMING_SCOPES = 'streaming user-modify-playback-state'
 
 interface Platform {
   title: string
@@ -46,7 +47,8 @@ function abort() {
 async function runOAuth(
   clientId: string,
   clientSecret: string,
-  redirectUri: string
+  redirectUri: string,
+  scopes: string,
 ): Promise<{ access_token: string; refresh_token: string }> {
   const redirectUrl = new URL(redirectUri)
   const port = parseInt(redirectUrl.port, 10) || 3000
@@ -128,7 +130,7 @@ async function runOAuth(
       authUrl.searchParams.set('response_type', 'code')
       authUrl.searchParams.set('client_id', clientId)
       authUrl.searchParams.set('redirect_uri', redirectUri)
-      authUrl.searchParams.set('scope', SCOPES)
+      authUrl.searchParams.set('scope', scopes)
 
       console.log(pc.dim('  Opening browser for authorization...'))
       console.log(pc.dim(`  If it doesn't open, visit:`))
@@ -199,13 +201,31 @@ async function main() {
     initial: 'http://localhost:3000/callback',
   }, { onCancel })
 
+  const { enableStreaming } = await prompts({
+    type: 'confirm',
+    name: 'enableStreaming',
+    message: 'Enable full-track streaming? (requires Spotify Premium)',
+    initial: false,
+  }, { onCancel })
+
+  const scopes = enableStreaming
+    ? `${BASE_SCOPES} ${STREAMING_SCOPES}`
+    : BASE_SCOPES
+
+  if (enableStreaming) {
+    console.log()
+    console.log(pc.dim('  Streaming enabled — your token will include the'))
+    console.log(pc.dim('  "streaming" and "user-modify-playback-state" scopes.'))
+    console.log(pc.dim('  Use playbackMode="sdk" in your PlaybackProvider.'))
+  }
+
   // OAuth flow
   console.log()
   console.log(pc.dim('  Starting OAuth flow...'))
 
   let tokens: { access_token: string; refresh_token: string }
   try {
-    tokens = await runOAuth(clientId.trim(), clientSecret.trim(), redirectUri.trim())
+    tokens = await runOAuth(clientId.trim(), clientSecret.trim(), redirectUri.trim(), scopes)
     console.log(pc.green('  ✓ Authorized! Tokens obtained.'))
   } catch (err) {
     console.error(pc.red(`  ✗ OAuth failed: ${err instanceof Error ? err.message : String(err)}`))

@@ -14,7 +14,8 @@ export function TrackCard({ track, rank, showArt = true, layout, onPlay }: Track
   const playback = useContext(PlaybackContext);
   const art = track.album.images[0]?.url;
 
-  const isPlayable = !!(onPlay || playback);
+  const isSDK = playback?.playbackMode === 'sdk';
+  const isPlayable = !!(onPlay || (playback && (isSDK || track.previewUrl)));
   const isPlaying = playback?.state.currentTrack?.id === track.id;
 
   function handleClick() {

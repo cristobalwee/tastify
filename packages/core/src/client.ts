@@ -44,6 +44,11 @@ export class TastifyClient {
     this.config = config;
   }
 
+  /** Returns the current access token. Used by the Web Playback SDK. */
+  async getAccessToken(): Promise<string> {
+    return this.resolveToken();
+  }
+
   private async resolveToken(): Promise<string> {
     if (this.config.getToken) {
       return this.config.getToken();

@@ -10,8 +10,10 @@ import {
 } from 'react';
 import {
   getAudioPlayer,
+  getOrCreateSDKPlayer,
   type AudioPlayer,
   type PlaybackState,
+  type PlaybackMode,
   type TastifyTrack,
   type TastifyArtist,
 } from '@tastify/core';
@@ -33,6 +35,8 @@ export interface PlaybackConfig {
 export interface PlaybackContextValue {
   state: PlaybackState;
   config: PlaybackConfig;
+  isReady: boolean;
+  playbackMode: PlaybackMode;
   play: (track: TastifyTrack) => void;
   playArtist: (artist: TastifyArtist) => void;
   pause: () => void;
@@ -49,18 +53,83 @@ export const PlaybackContext = createContext<PlaybackContextValue | null>(null);
 
 export interface PlaybackProviderProps extends PlaybackConfig {
   children: ReactNode;
+  /** 'preview' uses preview URLs, 'sdk' uses Spotify Web Playback SDK (Premium required), 'auto' tries SDK first. */
+  playbackMode?: PlaybackMode | 'auto';
+  /** Device name shown in Spotify Connect. */
+  deviceName?: string;
+  /** Initial volume (0–1). */
+  volume?: number;
+  /** Called when SDK mode fails due to non-Premium account. */
+  onPremiumRequired?: () => void;
 }
+
+const IDLE_STATE: PlaybackState = {
+  currentTrack: null,
+  isPlaying: false,
+  progress: 0,
+  duration: 0,
+  currentTime: 0,
+  playbackMode: 'preview',
+};
 
 export function PlaybackProvider({
   ui,
   toastPosition = 'bottom-right',
+  playbackMode: requestedMode = 'auto',
+  deviceName,
+  volume,
+  onPremiumRequired,
   children,
 }: PlaybackProviderProps) {
   const client = useTastifyClient();
-  const [player] = useState<AudioPlayer>(() => getAudioPlayer());
-  const [state, setState] = useState<PlaybackState>(() => player.getState());
+  const [player, setPlayer] = useState<AudioPlayer | null>(null);
+  const [state, setState] = useState<PlaybackState>(IDLE_STATE);
+  const [isReady, setIsReady] = useState(false);
 
+  // Initialize player
   useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      let p: AudioPlayer;
+
+      if (requestedMode === 'preview') {
+        p = getAudioPlayer();
+      } else {
+        // 'sdk' or 'auto' — try SDK first
+        try {
+          p = await getOrCreateSDKPlayer({
+            getToken: () => client.getAccessToken(),
+            deviceName,
+            volume,
+            onPremiumRequired,
+          });
+        } catch {
+          if (requestedMode === 'sdk') {
+            // SDK was explicitly requested but failed
+            onPremiumRequired?.();
+          }
+          p = getAudioPlayer();
+        }
+      }
+
+      if (!cancelled) {
+        setPlayer(p);
+        setState(p.getState());
+        setIsReady(true);
+      }
+    }
+
+    init();
+    return () => {
+      cancelled = true;
+    };
+  }, [client, requestedMode, deviceName, volume, onPremiumRequired]);
+
+  // Subscribe to player events
+  useEffect(() => {
+    if (!player) return;
+
     const unsub = player.subscribe('statechange', () => {
       setState(player.getState());
     });
@@ -75,16 +144,21 @@ export function PlaybackProvider({
 
   const play = useCallback(
     (track: TastifyTrack) => {
-      player.play(track);
+      player?.play(track);
     },
     [player],
   );
 
   const playArtist = useCallback(
     async (artist: TastifyArtist) => {
+      if (!player) return;
       try {
         const tracks = await client.getArtistTopTracks(artist.id);
-        const playable = tracks.filter((t) => t.previewUrl);
+        // In SDK mode all tracks are playable; in preview mode filter by previewUrl
+        const playable =
+          state.playbackMode === 'sdk'
+            ? tracks
+            : tracks.filter((t) => t.previewUrl);
         if (playable.length > 0) {
           player.setQueue(playable, 0);
         }
@@ -92,27 +166,29 @@ export function PlaybackProvider({
         // Silently ignore errors
       }
     },
-    [client, player],
+    [client, player, state.playbackMode],
   );
 
-  const pause = useCallback(() => player.pause(), [player]);
-  const resume = useCallback(() => player.resume(), [player]);
-  const togglePlayPause = useCallback(() => player.togglePlayPause(), [player]);
-  const next = useCallback(() => player.next(), [player]);
-  const previous = useCallback(() => player.previous(), [player]);
-  const seek = useCallback((f: number) => player.seek(f), [player]);
+  const pause = useCallback(() => player?.pause(), [player]);
+  const resume = useCallback(() => player?.resume(), [player]);
+  const togglePlayPause = useCallback(() => player?.togglePlayPause(), [player]);
+  const next = useCallback(() => player?.next(), [player]);
+  const previous = useCallback(() => player?.previous(), [player]);
+  const seek = useCallback((f: number) => player?.seek(f), [player]);
   const setQueue = useCallback(
     (tracks: TastifyTrack[], startIndex?: number) =>
-      player.setQueue(tracks, startIndex),
+      player?.setQueue(tracks, startIndex),
     [player],
   );
-  const stop = useCallback(() => player.stop(), [player]);
+  const stop = useCallback(() => player?.stop(), [player]);
 
   const config: PlaybackConfig = { ui, toastPosition };
 
   const value: PlaybackContextValue = {
     state,
     config,
+    isReady,
+    playbackMode: state.playbackMode,
     play,
     playArtist,
     pause,

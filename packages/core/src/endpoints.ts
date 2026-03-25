@@ -137,6 +137,42 @@ async function spotifyFetch(endpoint: string, token: string): Promise<Response> 
   return response;
 }
 
+async function spotifyRequest(
+  endpoint: string,
+  token: string,
+  method: string,
+  body?: unknown,
+): Promise<Response> {
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${token}`,
+  };
+  if (body !== undefined) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const response = await fetch(`${SPOTIFY_API_BASE}${endpoint}`, {
+    method,
+    headers,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
+  });
+
+  if (response.status === 204 || response.status === 202) return response;
+
+  if (!response.ok) {
+    const retryAfter =
+      response.status === 429
+        ? Number(response.headers.get('Retry-After')) || undefined
+        : undefined;
+    throw new TastifyError(
+      `Spotify API error: ${response.status} ${response.statusText}`,
+      response.status,
+      retryAfter,
+    );
+  }
+
+  return response;
+}
+
 export async function fetchNowPlaying(token: string): Promise<NowPlayingData | null> {
   const response = await spotifyFetch(ENDPOINTS.nowPlaying, token);
   if (response.status === 204) return null;
@@ -214,4 +250,88 @@ export async function fetchArtistTopTracks(
   );
   const raw: { tracks: RawTrack[] } = await response.json();
   return raw.tracks.map(normalizeTrack);
+}
+
+// --- Web Playback SDK control endpoints ---
+
+export async function startPlayback(
+  token: string,
+  deviceId: string,
+  uris: string[],
+  positionMs: number = 0,
+  offset: number = 0,
+): Promise<void> {
+  await spotifyRequest(
+    `/me/player/play?device_id=${encodeURIComponent(deviceId)}`,
+    token,
+    'PUT',
+    { uris, offset: { position: offset }, position_ms: positionMs },
+  );
+}
+
+export async function pausePlayback(
+  token: string,
+  deviceId: string,
+): Promise<void> {
+  await spotifyRequest(
+    `/me/player/pause?device_id=${encodeURIComponent(deviceId)}`,
+    token,
+    'PUT',
+  );
+}
+
+export async function resumePlayback(
+  token: string,
+  deviceId: string,
+): Promise<void> {
+  await spotifyRequest(
+    `/me/player/play?device_id=${encodeURIComponent(deviceId)}`,
+    token,
+    'PUT',
+  );
+}
+
+export async function seekPlayback(
+  token: string,
+  deviceId: string,
+  positionMs: number,
+): Promise<void> {
+  await spotifyRequest(
+    `/me/player/seek?position_ms=${Math.round(positionMs)}&device_id=${encodeURIComponent(deviceId)}`,
+    token,
+    'PUT',
+  );
+}
+
+export async function skipToNext(
+  token: string,
+  deviceId: string,
+): Promise<void> {
+  await spotifyRequest(
+    `/me/player/next?device_id=${encodeURIComponent(deviceId)}`,
+    token,
+    'POST',
+  );
+}
+
+export async function skipToPrevious(
+  token: string,
+  deviceId: string,
+): Promise<void> {
+  await spotifyRequest(
+    `/me/player/previous?device_id=${encodeURIComponent(deviceId)}`,
+    token,
+    'POST',
+  );
+}
+
+export async function transferPlayback(
+  token: string,
+  deviceId: string,
+  play: boolean = true,
+): Promise<void> {
+  await spotifyRequest('/me/player', token, 'PUT', {
+    device_ids: [deviceId],
+    play,
+  });
 }

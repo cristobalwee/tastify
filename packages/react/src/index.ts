@@ -33,5 +33,6 @@ export type {
   TastifyConfig,
   TastifyError,
   PlaybackState,
+  PlaybackMode,
   Poller,
 } from '@tastify/core';

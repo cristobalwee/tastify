@@ -16,5 +16,7 @@ export type {
   DataState,
   TastifyConfig,
   PlaybackState,
+  PlaybackMode,
+  SDKPlayerOptions,
 } from '@tastify/core';
-export { TastifyError, getAudioPlayer } from '@tastify/core';
+export { TastifyError, getAudioPlayer, getOrCreateSDKPlayer } from '@tastify/core';

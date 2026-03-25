@@ -5,7 +5,7 @@
 }
 
 :root {
-  --sc-bg: #fbfbfb;
+  --sc-bg: #F5F8F6;
   --sc-surface: #ffffff;
   --sc-surface-2: #f0f0f0;
   --sc-surface-3: #e0e0e0;
@@ -162,6 +162,66 @@ a:hover {
   color: var(--sc-accent);
 }
 
+.login__error {
+  font-size: 0.8125rem;
+  color: #c44;
+  background: rgba(204, 68, 68, 0.08);
+  border: 1px solid rgba(204, 68, 68, 0.2);
+  border-radius: var(--sc-radius-sm);
+  padding: 0.5rem 0.75rem;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.login__tabs {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--sc-border);
+  border-radius: var(--sc-radius-sm);
+  overflow: hidden;
+}
+
+.login__tab {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  background: var(--sc-surface);
+  border: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: var(--sc-font);
+  color: var(--sc-text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.login__tab:not(:last-child) {
+  border-right: 1px solid var(--sc-border);
+}
+
+.login__tab--active {
+  background: var(--sc-accent);
+  color: var(--sc-bg);
+}
+
+.login__scope-info {
+  font-size: 0.7rem;
+  color: var(--sc-text-subtle);
+  line-height: 1.6;
+}
+
+.login__scope-info code {
+  background: var(--sc-surface-2);
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
+  font-family: var(--sc-mono);
+  font-size: 0.65rem;
+  color: var(--sc-text-muted);
+}
+
+.login__scope-info a {
+  color: var(--sc-accent);
+}
+
 /* ── Layout ─────────────────────────────────────── */
 
 .showcase {
@@ -177,9 +237,8 @@ a:hover {
   left: 0;
   right: 0;
   z-index: 50;
-  border-bottom: 1px solid var(--sc-border);
   height: var(--sc-header-height);
-  background: rgba(251, 251, 251, 0.8);
+  background: rgba(251, 251, 251, 1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }

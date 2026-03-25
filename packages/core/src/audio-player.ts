@@ -1,4 +1,10 @@
+/// <reference path="./spotify-sdk.d.ts" />
+
 import type { TastifyTrack } from './types.js';
+import { loadSpotifySDK } from './sdk-loader.js';
+import { startPlayback, transferPlayback } from './endpoints.js';
+
+export type PlaybackMode = 'preview' | 'sdk';
 
 export interface PlaybackState {
   currentTrack: TastifyTrack | null;
@@ -6,6 +12,7 @@ export interface PlaybackState {
   progress: number;
   duration: number;
   currentTime: number;
+  playbackMode: PlaybackMode;
 }
 
 export type PlaybackEvent = 'statechange' | 'trackchange' | 'ended';
@@ -24,6 +31,15 @@ export interface AudioPlayer {
   stop(): void;
   destroy(): void;
 }
+
+export interface SDKPlayerOptions {
+  getToken: () => Promise<string>;
+  deviceName?: string;
+  volume?: number;
+  onPremiumRequired?: () => void;
+}
+
+// --- Preview-URL player (existing implementation) ---
 
 function createAudioPlayer(): AudioPlayer {
   const audio = new Audio();
@@ -135,6 +151,7 @@ function createAudioPlayer(): AudioPlayer {
         progress: duration > 0 ? audio.currentTime / duration : 0,
         duration,
         currentTime: audio.currentTime,
+        playbackMode: 'preview',
       };
     },
 
@@ -194,13 +211,315 @@ function createAudioPlayer(): AudioPlayer {
   return player;
 }
 
+// --- Web Playback SDK player ---
+
+async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> {
+  await loadSpotifySDK();
+
+  const listeners = new Map<PlaybackEvent, Set<() => void>>();
+  listeners.set('statechange', new Set());
+  listeners.set('trackchange', new Set());
+  listeners.set('ended', new Set());
+
+  function emit(event: PlaybackEvent): void {
+    const cbs = listeners.get(event);
+    if (cbs) {
+      for (const cb of cbs) {
+        cb();
+      }
+    }
+  }
+
+  let deviceId: string | null = null;
+  let currentTrack: TastifyTrack | null = null;
+  let queue: TastifyTrack[] = [];
+  let queueIndex = -1;
+  let cachedState: Spotify.WebPlaybackState | null = null;
+  let progressInterval: ReturnType<typeof setInterval> | null = null;
+  // Map track URIs to TastifyTrack objects for metadata resolution
+  const trackMap = new Map<string, TastifyTrack>();
+
+  const spotifyPlayer = new Spotify.Player({
+    name: options.deviceName ?? 'Tastify Web Player',
+    getOAuthToken: (cb) => {
+      options.getToken().then(cb).catch(() => {});
+    },
+    volume: options.volume ?? 0.5,
+  });
+
+  function startProgressPolling(): void {
+    if (progressInterval) return;
+    progressInterval = setInterval(() => {
+      spotifyPlayer.getCurrentState().then((state) => {
+        if (state) {
+          const prevTrackUri = cachedState?.track_window.current_track.uri;
+          cachedState = state;
+          if (state.track_window.current_track.uri !== prevTrackUri) {
+            currentTrack = trackMap.get(state.track_window.current_track.uri) ?? currentTrack;
+            emit('trackchange');
+          }
+          emit('statechange');
+        }
+      }).catch(() => {});
+    }, 500);
+  }
+
+  function stopProgressPolling(): void {
+    if (progressInterval) {
+      clearInterval(progressInterval);
+      progressInterval = null;
+    }
+  }
+
+  // Handle SDK events
+  spotifyPlayer.addListener('player_state_changed', (state) => {
+    if (!state) {
+      cachedState = null;
+      emit('statechange');
+      stopProgressPolling();
+      return;
+    }
+
+    const prevTrackUri = cachedState?.track_window.current_track.uri;
+    const wasPlaying = cachedState ? !cachedState.paused : false;
+    cachedState = state;
+
+    // Track changed
+    if (state.track_window.current_track.uri !== prevTrackUri) {
+      currentTrack = trackMap.get(state.track_window.current_track.uri) ?? currentTrack;
+      emit('trackchange');
+    }
+
+    // Track ended (was playing, now paused at position 0, no next tracks)
+    if (
+      wasPlaying &&
+      state.paused &&
+      state.position === 0 &&
+      state.track_window.next_tracks.length === 0
+    ) {
+      emit('ended');
+      stopProgressPolling();
+    } else if (!state.paused) {
+      startProgressPolling();
+    } else {
+      stopProgressPolling();
+    }
+
+    emit('statechange');
+  });
+
+  spotifyPlayer.addListener('account_error', () => {
+    options.onPremiumRequired?.();
+  });
+
+  // Connect and wait for device_id
+  const connected = await new Promise<boolean>((resolve) => {
+    spotifyPlayer.addListener('ready', ({ device_id }) => {
+      deviceId = device_id;
+      resolve(true);
+    });
+
+    spotifyPlayer.addListener('initialization_error', () => resolve(false));
+    spotifyPlayer.addListener('authentication_error', () => resolve(false));
+
+    spotifyPlayer.connect().then((ok) => {
+      if (!ok) resolve(false);
+    });
+  });
+
+  if (!connected) {
+    spotifyPlayer.disconnect();
+    throw new Error('Failed to connect Spotify Web Playback SDK');
+  }
+
+  // Helper: try startPlayback, if 404 activate the device first and retry
+  let deviceActivated = false;
+  async function ensurePlayback(token: string, uris: string[], positionMs = 0, offset = 0): Promise<void> {
+    if (!deviceActivated) {
+      try {
+        await transferPlayback(token, deviceId!, false);
+        deviceActivated = true;
+      } catch {
+        // best-effort — may fail if no prior session exists
+      }
+    }
+    try {
+      await startPlayback(token, deviceId!, uris, positionMs, offset);
+    } catch {
+      // Retry once after activating the device
+      await transferPlayback(token, deviceId!, false);
+      deviceActivated = true;
+      await startPlayback(token, deviceId!, uris, positionMs, offset);
+    }
+  }
+
+  const player: AudioPlayer = {
+    play(track: TastifyTrack): void {
+      if (!deviceId) return;
+      trackMap.set(track.uri, track);
+      currentTrack = track;
+      queue = [track];
+      queueIndex = 0;
+
+      options.getToken().then((token) =>
+        ensurePlayback(token, [track.uri])
+      ).catch(() => {});
+
+      emit('trackchange');
+      emit('statechange');
+    },
+
+    pause(): void {
+      spotifyPlayer.pause().catch(() => {});
+    },
+
+    resume(): void {
+      spotifyPlayer.resume().catch(() => {});
+    },
+
+    togglePlayPause(): void {
+      spotifyPlayer.togglePlay().catch(() => {});
+    },
+
+    seek(fraction: number): void {
+      const durationMs = cachedState?.duration ?? 0;
+      if (durationMs > 0) {
+        const positionMs = Math.max(0, Math.min(1, fraction)) * durationMs;
+        spotifyPlayer.seek(positionMs).catch(() => {});
+      }
+    },
+
+    getState(): PlaybackState {
+      if (!cachedState) {
+        return {
+          currentTrack,
+          isPlaying: false,
+          progress: 0,
+          duration: 0,
+          currentTime: 0,
+          playbackMode: 'sdk',
+        };
+      }
+
+      const durationSec = cachedState.duration / 1000;
+      const currentTimeSec = cachedState.position / 1000;
+
+      return {
+        currentTrack,
+        isPlaying: !cachedState.paused,
+        progress: durationSec > 0 ? currentTimeSec / durationSec : 0,
+        duration: durationSec,
+        currentTime: currentTimeSec,
+        playbackMode: 'sdk',
+      };
+    },
+
+    subscribe(event: PlaybackEvent, cb: () => void): () => void {
+      const cbs = listeners.get(event);
+      if (cbs) {
+        cbs.add(cb);
+      }
+      return () => {
+        cbs?.delete(cb);
+      };
+    },
+
+    setQueue(tracks: TastifyTrack[], startIndex = 0): void {
+      if (!deviceId) return;
+      queue = [...tracks];
+      queueIndex = startIndex;
+
+      for (const t of tracks) {
+        trackMap.set(t.uri, t);
+      }
+
+      if (queue.length > 0 && startIndex >= 0 && startIndex < queue.length) {
+        currentTrack = queue[startIndex]!;
+        const uris = queue.map((t) => t.uri);
+
+        options.getToken().then((token) =>
+          ensurePlayback(token, uris, 0, startIndex)
+        ).catch(() => {});
+
+        emit('trackchange');
+        emit('statechange');
+      }
+    },
+
+    next(): void {
+      spotifyPlayer.nextTrack().catch(() => {});
+    },
+
+    previous(): void {
+      const currentTimeSec = cachedState ? cachedState.position / 1000 : 0;
+      if (currentTimeSec > 3) {
+        spotifyPlayer.seek(0).catch(() => {});
+        return;
+      }
+      spotifyPlayer.previousTrack().catch(() => {});
+    },
+
+    stop(): void {
+      spotifyPlayer.pause().catch(() => {});
+      stopProgressPolling();
+      currentTrack = null;
+      queue = [];
+      queueIndex = -1;
+      cachedState = null;
+      trackMap.clear();
+      emit('trackchange');
+      emit('statechange');
+    },
+
+    destroy(): void {
+      player.stop();
+      spotifyPlayer.disconnect();
+      for (const cbs of listeners.values()) {
+        cbs.clear();
+      }
+    },
+  };
+
+  return player;
+}
+
+// --- Singleton management ---
+
 let instance: AudioPlayer | null = null;
+let pendingSDK: Promise<AudioPlayer> | null = null;
 
 export function getAudioPlayer(): AudioPlayer {
   if (!instance) {
     instance = createAudioPlayer();
   }
   return instance;
+}
+
+/**
+ * Creates an SDK-backed audio player (requires Spotify Premium).
+ * Falls back to the preview player if the SDK fails to connect.
+ */
+export async function getOrCreateSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> {
+  if (instance) {
+    return instance;
+  }
+  // Deduplicate concurrent calls (e.g. React StrictMode double-mount)
+  if (pendingSDK) {
+    return pendingSDK;
+  }
+
+  pendingSDK = (async () => {
+    try {
+      instance = await createSDKPlayer(options);
+    } catch {
+      options.onPremiumRequired?.();
+      instance = createAudioPlayer();
+    }
+    pendingSDK = null;
+    return instance!;
+  })();
+
+  return pendingSDK;
 }
 
 export function resetAudioPlayer(): void {
