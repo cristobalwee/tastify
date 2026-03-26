@@ -728,7 +728,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--tf-space-sm);
-  padding: 0 var(--tf-space-md) var(--tf-space-sm);
+  padding: 0 var(--tf-space-md);
 }
 
 .tf-playback-toast__btn {
