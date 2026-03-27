@@ -53,7 +53,7 @@ async function runOAuth(
   const redirectUrl = new URL(redirectUri)
   const port = parseInt(redirectUrl.port, 10) || 3000
 
-  return new Promise<string>((resolve, reject) => {
+  return new Promise<{ access_token: string; refresh_token: string }>((resolve, reject) => {
     const server = http.createServer(async (req, res) => {
       const url = new URL(req.url ?? '/', `http://localhost:${port}`)
 
@@ -125,7 +125,7 @@ async function runOAuth(
       process.off('SIGINT', onSigint)
     })
 
-    server.listen(port, () => {
+    server.listen(port, '127.0.0.1', () => {
       const authUrl = new URL(SPOTIFY_AUTH_URL)
       authUrl.searchParams.set('response_type', 'code')
       authUrl.searchParams.set('client_id', clientId)
@@ -198,7 +198,7 @@ async function main() {
     type: 'text',
     name: 'redirectUri',
     message: 'Redirect URI',
-    initial: 'http://localhost:3000/callback',
+    initial: 'http://127.0.0.1:3000/callback',
   }, { onCancel })
 
   const { enableStreaming } = await prompts({

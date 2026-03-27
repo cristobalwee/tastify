@@ -1,0 +1,53 @@
+---
+const step1 = `<span class="comment"># npm</span>
+npm install @tastify/react
+
+<span class="comment"># pnpm</span>
+pnpm add @tastify/react`;
+
+const step3 = `<span class="keyword">import</span> { TastifyProvider, TopTracks } <span class="keyword">from</span> '@tastify/react';
+<span class="keyword">import</span> '@tastify/react/styles.css';
+
+<span class="keyword">function</span> App() {
+  <span class="keyword">return</span> (
+    &lt;TastifyProvider tokenUrl="/api/spotify-token"&gt;
+      &lt;TopTracks limit={5} showTimeRangeSelector /&gt;
+    &lt;/TastifyProvider&gt;
+  );
+}`;
+---
+
+<section class="section" id="get-started">
+  <div class="container">
+    <h2 class="section__title">Get started</h2>
+    <p class="section__subtitle">
+      Three steps to have Spotify widgets running on your site.
+    </p>
+
+    <div class="get-started__steps">
+      <div class="get-started__step">
+        <div class="get-started__step-header">
+          <span class="get-started__step-number">1</span>
+          Install the package
+        </div>
+        <pre class="get-started__code"><code set:html={step1} /></pre>
+      </div>
+
+      <div class="get-started__step">
+        <div class="get-started__step-header">
+          <span class="get-started__step-number">2</span>
+          Set up your token endpoint
+        </div>
+        <pre class="get-started__code"><code>npx tastify init</code></pre>
+      </div>
+
+      <div class="get-started__step">
+        <div class="get-started__step-header">
+          <span class="get-started__step-number">3</span>
+          Add components to your app
+        </div>
+        <pre class="get-started__code"><code set:html={step3} /></pre>
+      </div>
+    </div>
+  </div>
+</section>

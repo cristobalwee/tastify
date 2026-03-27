@@ -10,7 +10,8 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
-    "showcase": "pnpm --filter @tastify/showcase exec vite"
+    "showcase": "pnpm --filter @tastify/showcase exec vite",
+    "landing": "pnpm --filter tastify-landing exec astro dev"
   },
   "pnpm": {
     "onlyBuiltDependencies": ["esbuild"]

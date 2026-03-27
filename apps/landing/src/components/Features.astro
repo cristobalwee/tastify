@@ -1,0 +1,95 @@
+---
+const features = [
+  {
+    title: 'React Components',
+    description: 'Drop-in components for top tracks, top artists, recently played, and now playing — with built-in loading states and error handling.',
+    icon: 'react',
+  },
+  {
+    title: 'Vanilla JS',
+    description: 'Framework-agnostic widgets that work anywhere. Mount with a single function call or use data attributes for zero-JS setup.',
+    icon: 'code',
+  },
+  {
+    title: 'CLI Setup',
+    description: 'Run npx tastify init to scaffold a token endpoint for Vercel, Netlify, Cloudflare, or Express in seconds.',
+    icon: 'terminal',
+  },
+  {
+    title: 'Spotify Auth',
+    description: 'Built-in OAuth PKCE flow and token refresh handling. Supports static tokens, dynamic getToken, or a tokenUrl endpoint.',
+    icon: 'lock',
+  },
+  {
+    title: 'Playback',
+    description: 'Full-track streaming via the Spotify Web Playback SDK with a fallback to 30-second previews. Bar and toast UI options.',
+    icon: 'play',
+  },
+  {
+    title: 'Theming',
+    description: 'Every visual detail is driven by CSS custom properties. Override colors, fonts, spacing, and radii to match your site.',
+    icon: 'palette',
+  },
+];
+---
+
+<section class="section" id="features">
+  <div class="container">
+    <h2 class="section__title">What you get</h2>
+    <p class="section__subtitle">
+      Everything you need to display your Spotify listening habits on your personal site.
+    </p>
+
+    <div class="features-grid">
+      {features.map((f) => (
+        <div class="feature-card">
+          <div class="feature-card__icon">
+            {f.icon === 'react' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="2.5" />
+                <ellipse cx="12" cy="12" rx="10" ry="4" />
+                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)" />
+                <ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)" />
+              </svg>
+            )}
+            {f.icon === 'code' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="16 18 22 12 16 6" />
+                <polyline points="8 6 2 12 8 18" />
+              </svg>
+            )}
+            {f.icon === 'terminal' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="4 17 10 11 4 5" />
+                <line x1="12" y1="19" x2="20" y2="19" />
+              </svg>
+            )}
+            {f.icon === 'lock' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+              </svg>
+            )}
+            {f.icon === 'play' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none" />
+              </svg>
+            )}
+            {f.icon === 'palette' && (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="13.5" cy="6.5" r="2" />
+                <circle cx="17.5" cy="10.5" r="2" />
+                <circle cx="8.5" cy="7.5" r="2" />
+                <circle cx="6.5" cy="12.5" r="2" />
+                <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z" />
+              </svg>
+            )}
+          </div>
+          <h3 class="feature-card__title">{f.title}</h3>
+          <p class="feature-card__description">{f.description}</p>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
