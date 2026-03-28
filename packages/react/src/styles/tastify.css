@@ -241,6 +241,7 @@
 .tf-now-playing__track {
   font-size: var(--tf-font-size-base);
   font-weight: var(--tf-font-weight-medium);
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -345,6 +346,7 @@
   color: var(--tf-color-text-secondary);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .tf-track-card--grid {

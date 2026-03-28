@@ -3,6 +3,7 @@ import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import Showcase from '../components/Showcase';
 import Features from '../components/Features.astro';
+import ComponentPlayground from '../components/ComponentPlayground';
 import GetStarted from '../components/GetStarted.astro';
 import Support from '../components/Support.astro';
 import Footer from '../components/Footer.astro';
@@ -12,7 +13,7 @@ import Footer from '../components/Footer.astro';
   <Hero />
   <Showcase client:load />
   <Features />
+  <ComponentPlayground client:load />
   <GetStarted />
-  <Support />
   <Footer />
 </Layout>

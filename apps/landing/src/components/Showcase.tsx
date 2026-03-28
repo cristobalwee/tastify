@@ -38,7 +38,7 @@ export default function Showcase() {
             <div className="showcase-panel">
               <RecentlyPlayed limit={8} />
             </div>
-            <div className="showcase-panel">
+            <div className="showcase-sub-panel">
               <TopArtists
                 limit={9}
                 layout="grid"
