@@ -6,9 +6,9 @@
   --tf-color-accent: #1db954;
   --tf-color-border: #e0e0e0;
   --tf-font-family: inherit;
-  --tf-font-size-sm: 0.8125rem;
-  --tf-font-size-base: 0.875rem;
-  --tf-font-size-lg: 1rem;
+  --tf-font-size-sm: 0.875rem;
+  --tf-font-size-base: 1rem;
+  --tf-font-size-lg: 1.125rem;
   --tf-font-weight-normal: 400;
   --tf-font-weight-medium: 500;
   --tf-font-weight-bold: 600;
@@ -18,8 +18,8 @@
   --tf-space-lg: 1rem;
   --tf-space-xl: 1.5rem;
   --tf-radius: 8px;
-  --tf-art-size: 48px;
-  --tf-art-radius: 4px;
+  --tf-art-size: 56px;
+  --tf-art-radius: 8px;
   --tf-grid-gap: 1rem;
   --tf-transition-speed: 200ms;
   --tf-pulse-color: #1db954;
@@ -140,8 +140,8 @@
 .tf-track-card--list {
   display: flex;
   align-items: center;
-  gap: var(--tf-space-sm);
-  padding: var(--tf-space-sm) 0;
+  gap: var(--tf-space-md);
+  padding: var(--tf-space-sm);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
 }
@@ -166,7 +166,7 @@
 .tf-track-card__info {
   display: flex;
   flex-direction: column;
-  gap: var(--tf-space-xs);
+  gap: 0;
   min-width: 0;
 }
 
@@ -258,6 +258,7 @@
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
   min-width: 0;
+  padding: var(--tf-space-sm);
   overflow: hidden;
 }
 
@@ -288,7 +289,7 @@
   display: flex;
   align-items: center;
   gap: var(--tf-space-sm);
-  padding: var(--tf-space-sm) 0;
+  padding: var(--tf-space-sm);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
 }

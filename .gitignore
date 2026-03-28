@@ -4,3 +4,6 @@ dist
 coverage
 .DS_Store
 .next/
+.env/
+.env.local/
+packages/cli/.env
