@@ -9,6 +9,25 @@ interface ArtistCardProps {
   onPlay?: (artist: TastifyArtist) => void;
 }
 
+export function ArtistCardSkeleton({ layout }: { layout: 'grid' | 'list' }) {
+  if (layout === 'grid') {
+    return (
+      <div className="tf-artist-card tf-artist-card--grid">
+        <div className="tf-skeleton tf-skeleton--photo-circle" />
+        <div className="tf-skeleton tf-skeleton--text" style={{ width: '70%' }} />
+      </div>
+    );
+  }
+  return (
+    <div className="tf-artist-card tf-artist-card--list">
+      <div className="tf-skeleton tf-skeleton--art tf-skeleton--circle" />
+      <div className="tf-artist-card__info">
+        <div className="tf-skeleton tf-skeleton--text" style={{ width: '60%' }} />
+      </div>
+    </div>
+  );
+}
+
 export function ArtistCard({ artist, layout, showGenres = false, onPlay }: ArtistCardProps) {
   const playback = useContext(PlaybackContext);
   const photo = artist.images[0]?.url;

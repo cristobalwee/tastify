@@ -15,6 +15,18 @@ export interface NowPlayingProps {
   children?: (data: NowPlayingData) => ReactNode;
 }
 
+function NowPlayingSkeleton({ className }: { className?: string }) {
+  return (
+    <div className={cls('tf-now-playing tf-now-playing--loading', className)}>
+      <div className="tf-skeleton tf-skeleton--art" />
+      <div className="tf-now-playing__info">
+        <div className="tf-skeleton tf-skeleton--text" style={{ width: '60%' }} />
+        <div className="tf-skeleton tf-skeleton--text-sm" />
+      </div>
+    </div>
+  );
+}
+
 export function NowPlaying({
   pollInterval = 15_000,
   showArt = true,
@@ -28,7 +40,7 @@ export function NowPlaying({
   const state = useNowPlaying({ pollInterval });
 
   if (state.status === 'loading' || state.status === 'idle') {
-    return <div className={cls('tf-now-playing tf-now-playing--loading', className)} />;
+    return <NowPlayingSkeleton className={className} />;
   }
 
   if (state.status === 'error') {

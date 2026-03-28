@@ -190,7 +190,7 @@ img {
 /* ── Showcase (interactive area) ──────────────── */
 
 .showcase-section {
-  padding: 2rem 0 5rem;
+  padding: 2rem 1rem 5rem;
   position: relative;
 }
 
@@ -225,7 +225,7 @@ img {
   margin: 0 auto;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: 3rem;
   background: var(--landing-surface);
   border: 1px solid var(--landing-border);
   border-radius: 20px;
@@ -238,7 +238,7 @@ img {
 
 .showcase-panel:last-child {
   background: var(--landing-surface-alt);
-  border-radius: 12px;
+  border-radius: 16px;
   padding: 1.5rem;
 }
 

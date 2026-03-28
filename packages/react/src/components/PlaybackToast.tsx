@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePlayback } from '../playback.js';
 import type { ToastPosition } from '../playback.js';
 
@@ -14,6 +14,11 @@ export function PlaybackToast({ position: positionProp }: PlaybackToastProps) {
   const position = positionProp ?? config.toastPosition ?? 'bottom-right';
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const lastTrackRef = useRef(state.currentTrack);
+
+  if (state.currentTrack) {
+    lastTrackRef.current = state.currentTrack;
+  }
 
   useEffect(() => {
     if (state.currentTrack) {
@@ -29,14 +34,16 @@ export function PlaybackToast({ position: positionProp }: PlaybackToastProps) {
   function handleTransitionEnd() {
     if (!visible && !state.currentTrack) {
       setMounted(false);
+      lastTrackRef.current = null;
     }
   }
 
   if (!mounted) return null;
 
-  const { currentTrack, isPlaying, progress } = state;
-  const art = currentTrack?.album.images[0]?.url;
-  const artistNames = currentTrack?.artists.map((a) => a.name).join(', ') ?? '';
+  const displayTrack = state.currentTrack ?? lastTrackRef.current;
+  const { isPlaying, progress } = state;
+  const art = displayTrack?.album.images[0]?.url;
+  const artistNames = displayTrack?.artists.map((a) => a.name).join(', ') ?? '';
 
   function handleProgressClick(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -54,12 +61,12 @@ export function PlaybackToast({ position: positionProp }: PlaybackToastProps) {
           <img
             className="tf-playback-toast__art"
             src={art}
-            alt={currentTrack?.album.name}
+            alt={displayTrack?.album.name}
             loading="lazy"
           />
         )}
         <div className="tf-playback-toast__info">
-          <span className="tf-playback-toast__name">{currentTrack?.name}</span>
+          <span className="tf-playback-toast__name">{displayTrack?.name}</span>
           <span className="tf-playback-toast__artist">{artistNames}</span>
         </div>
         <div className="tf-playback-toast__controls">

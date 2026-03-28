@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import type { RecentlyPlayedData } from '@tastify/core';
 import { useRecentlyPlayed } from '../hooks/useRecentlyPlayed.js';
-import { TrackCard } from './TrackCard.js';
+import { TrackCard, TrackCardSkeleton } from './TrackCard.js';
 
 export interface RecentlyPlayedProps {
   limit?: number;
@@ -39,6 +39,31 @@ function getDayKey(dateStr: string): string {
   });
 }
 
+function RecentlyPlayedSkeleton({
+  limit = 10,
+  layout = 'list',
+  header,
+  className,
+}: {
+  limit?: number;
+  layout?: 'timeline' | 'list';
+  header?: string | null;
+  className?: string;
+}) {
+  return (
+    <div className={cls(`tf-recently-played tf-recently-played--${layout}`, className)}>
+      {header !== null && <h3 className="tf-recently-played__header">{header}</h3>}
+      <div className="tf-recently-played__list">
+        {Array.from({ length: Math.min(limit, 5) }, (_, i) => (
+          <div key={i} className="tf-recently-played__item">
+            <TrackCardSkeleton layout="list" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function RecentlyPlayed({
   limit = 10,
   layout = 'list',
@@ -52,7 +77,12 @@ export function RecentlyPlayed({
 
   if (state.status === 'loading' || state.status === 'idle') {
     return (
-      <div className={cls('tf-recently-played tf-recently-played--loading', className)} />
+      <RecentlyPlayedSkeleton
+        limit={limit}
+        layout={layout}
+        header={header}
+        className={className}
+      />
     );
   }
 
@@ -118,9 +148,7 @@ export function RecentlyPlayed({
                   <TrackCard track={item.track} showArt layout="list" />
                   {showTimestamp && (
                     <span className="tf-recently-played__time">
-                      {layout === 'timeline'
-                        ? formatRelativeTime(item.playedAt)
-                        : formatRelativeTime(item.playedAt)}
+                      {formatRelativeTime(item.playedAt)}
                     </span>
                   )}
                 </div>

@@ -53,10 +53,25 @@ export interface RecentlyPlayedOptions {
   header?: string | null;
 }
 
+function createWaveform(): HTMLElement {
+  return h('span', { class: 'tf-waveform' }, [
+    h('span', { class: 'tf-waveform__bar' }),
+    h('span', { class: 'tf-waveform__bar' }),
+    h('span', { class: 'tf-waveform__bar' }),
+    h('span', { class: 'tf-waveform__bar' }),
+  ]);
+}
+
 function renderTrackCard(
   track: TastifyTrack,
   layout: 'list' | 'grid',
-  opts: { rank?: number; showArt?: boolean; onPlay?: (track: TastifyTrack) => void },
+  opts: {
+    rank?: number;
+    showArt?: boolean;
+    onPlay?: (track: TastifyTrack) => void;
+    isPlaying?: boolean;
+    isPaused?: boolean;
+  },
 ): HTMLElement {
   const art = track.album.images[0]?.url;
   const artistNames = track.artists.map((a) => a.name).join(', ');
@@ -65,6 +80,7 @@ function renderTrackCard(
   function buildClasses(base: string): string {
     const parts = [base];
     if (playable) parts.push('tf-track-card--playable');
+    if (opts.isPlaying) parts.push('tf-track-card--playing');
     return parts.join(' ');
   }
 
@@ -84,10 +100,19 @@ function renderTrackCard(
     }
     children.push(h('span', { class: 'tf-track-card__name' }, [track.name]));
     children.push(h('span', { class: 'tf-track-card__artist' }, [artistNames]));
+    if (opts.isPlaying) {
+      const waveform = createWaveform();
+      if (opts.isPaused) waveform.classList.add('tf-waveform--paused');
+      children.push(waveform);
+    }
     el = h('div', { class: buildClasses('tf-track-card tf-track-card--grid') }, children);
   } else {
     const children: (HTMLElement | Text)[] = [];
-    if (opts.rank != null) {
+    if (opts.isPlaying) {
+      const waveform = createWaveform();
+      if (opts.isPaused) waveform.classList.add('tf-waveform--paused');
+      children.push(waveform);
+    } else if (opts.rank != null) {
       children.push(h('span', { class: 'tf-track-card__rank' }, [String(opts.rank)]));
     }
     if (opts.showArt !== false && art) {
@@ -123,6 +148,38 @@ function renderTrackCard(
   }
 
   return el;
+}
+
+function renderTrackCardSkeleton(layout: 'list' | 'grid'): HTMLElement {
+  if (layout === 'grid') {
+    return h('div', { class: 'tf-track-card tf-track-card--grid' }, [
+      h('div', { class: 'tf-skeleton tf-skeleton--art-grid' }),
+      h('div', { class: 'tf-skeleton tf-skeleton--text', style: 'width:80%' }),
+      h('div', { class: 'tf-skeleton tf-skeleton--text-sm' }),
+    ]);
+  }
+  return h('div', { class: 'tf-track-card tf-track-card--list' }, [
+    h('div', { class: 'tf-skeleton tf-skeleton--art' }),
+    h('div', { class: 'tf-track-card__info' }, [
+      h('div', { class: 'tf-skeleton tf-skeleton--text', style: 'width:70%' }),
+      h('div', { class: 'tf-skeleton tf-skeleton--text-sm' }),
+    ]),
+  ]);
+}
+
+function renderArtistCardSkeleton(layout: 'grid' | 'list'): HTMLElement {
+  if (layout === 'grid') {
+    return h('div', { class: 'tf-artist-card tf-artist-card--grid' }, [
+      h('div', { class: 'tf-skeleton tf-skeleton--photo-circle' }),
+      h('div', { class: 'tf-skeleton tf-skeleton--text', style: 'width:70%' }),
+    ]);
+  }
+  return h('div', { class: 'tf-artist-card tf-artist-card--list' }, [
+    h('div', { class: 'tf-skeleton tf-skeleton--art tf-skeleton--circle' }),
+    h('div', { class: 'tf-artist-card__info' }, [
+      h('div', { class: 'tf-skeleton tf-skeleton--text', style: 'width:60%' }),
+    ]),
+  ]);
 }
 
 function renderArtistCard(
@@ -217,6 +274,16 @@ function getDayKey(dateStr: string): string {
   });
 }
 
+export function renderNowPlayingSkeleton(opts: NowPlayingOptions): HTMLElement {
+  return h('div', { class: 'tf-now-playing tf-now-playing--loading' }, [
+    h('div', { class: 'tf-skeleton tf-skeleton--art' }),
+    h('div', { class: 'tf-now-playing__info' }, [
+      h('div', { class: 'tf-skeleton tf-skeleton--text', style: 'width:60%' }),
+      h('div', { class: 'tf-skeleton tf-skeleton--text-sm' }),
+    ]),
+  ]);
+}
+
 export function renderNowPlaying(
   data: NowPlayingData | null,
   opts: NowPlayingOptions,
@@ -290,6 +357,33 @@ export function renderNowPlaying(
   return h('div', { class: classes.join(' ') }, children);
 }
 
+export function renderTopTracksSkeleton(opts: TopTracksOptions): HTMLElement {
+  const {
+    layout = 'list',
+    columns = 3,
+    limit = 5,
+    header = 'On Repeat',
+  } = opts;
+
+  const children: (HTMLElement | Text)[] = [];
+  if (header !== null) {
+    children.push(h('h3', { class: 'tf-top-tracks__header' }, [header]));
+  }
+
+  const listEl = h(
+    'div',
+    { class: 'tf-top-tracks__list' },
+    Array.from({ length: limit }, () => renderTrackCardSkeleton(layout)),
+  );
+
+  if (layout === 'grid') {
+    setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
+  }
+
+  children.push(listEl);
+  return h('div', { class: `tf-top-tracks tf-top-tracks--${layout}` }, children);
+}
+
 export function renderTopTracks(
   data: TopTracksData,
   opts: TopTracksOptions,
@@ -347,6 +441,33 @@ export function renderTopTracks(
   return h('div', { class: `tf-top-tracks tf-top-tracks--${layout}` }, children);
 }
 
+export function renderTopArtistsSkeleton(opts: TopArtistsOptions): HTMLElement {
+  const {
+    layout = 'grid',
+    columns = 3,
+    limit = 6,
+    header = 'Top Artists',
+  } = opts;
+
+  const children: (HTMLElement | Text)[] = [];
+  if (header !== null) {
+    children.push(h('h3', { class: 'tf-top-artists__header' }, [header]));
+  }
+
+  const listEl = h(
+    'div',
+    { class: 'tf-top-artists__list' },
+    Array.from({ length: limit }, () => renderArtistCardSkeleton(layout)),
+  );
+
+  if (layout === 'grid') {
+    setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
+  }
+
+  children.push(listEl);
+  return h('div', { class: `tf-top-artists tf-top-artists--${layout}` }, children);
+}
+
 export function renderTopArtists(
   data: TopArtistsData,
   opts: TopArtistsOptions,
@@ -396,6 +517,28 @@ export function renderTopArtists(
   children.push(listEl);
 
   return h('div', { class: `tf-top-artists tf-top-artists--${layout}` }, children);
+}
+
+export function renderRecentlyPlayedSkeleton(opts: RecentlyPlayedOptions): HTMLElement {
+  const {
+    layout = 'list',
+    limit = 10,
+    header = 'Recently Played',
+  } = opts;
+
+  const children: (HTMLElement | Text)[] = [];
+  if (header !== null) {
+    children.push(h('h3', { class: 'tf-recently-played__header' }, [header]));
+  }
+
+  const itemEls = Array.from({ length: Math.min(limit, 5) }, () =>
+    h('div', { class: 'tf-recently-played__item' }, [
+      renderTrackCardSkeleton('list'),
+    ]),
+  );
+
+  children.push(h('div', { class: 'tf-recently-played__list' }, itemEls));
+  return h('div', { class: `tf-recently-played tf-recently-played--${layout}` }, children);
 }
 
 export function renderRecentlyPlayed(

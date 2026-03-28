@@ -30,14 +30,166 @@
   --tf-playback-toast-shadow: 0 8px 32px rgba(0, 0, 0, 0.24);
 }
 
-/* @media (prefers-color-scheme: dark) {
-  :root {
-    --tf-color-surface: #1a1a1a;
-    --tf-color-text-primary: #f0f0f0;
-    --tf-color-text-secondary: #888888;
-    --tf-color-border: #2a2a2a;
+/* ── Skeleton / Shimmer ────────────────────────── */
+
+@keyframes tf-shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.tf-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--tf-color-border) 25%,
+    color-mix(in srgb, var(--tf-color-border) 60%, transparent) 50%,
+    var(--tf-color-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: tf-shimmer 1.8s ease-in-out infinite;
+  border-radius: var(--tf-radius);
+}
+
+.tf-skeleton--circle {
+  border-radius: 50%;
+}
+
+.tf-skeleton--text {
+  height: 0.875em;
+  border-radius: 4px;
+}
+
+.tf-skeleton--text-sm {
+  height: 0.75em;
+  border-radius: 4px;
+  width: 60%;
+}
+
+.tf-skeleton--art {
+  width: var(--tf-art-size);
+  height: var(--tf-art-size);
+  border-radius: var(--tf-art-radius);
+  flex-shrink: 0;
+}
+
+.tf-skeleton--art-grid {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--tf-radius);
+}
+
+.tf-skeleton--photo-circle {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+/* ── Waveform (playing indicator) ─────────────── */
+
+@keyframes tf-waveform-1 {
+  0%, 100% { height: 30%; }
+  50% { height: 80%; }
+}
+@keyframes tf-waveform-2 {
+  0%, 100% { height: 50%; }
+  50% { height: 100%; }
+}
+@keyframes tf-waveform-3 {
+  0%, 100% { height: 60%; }
+  50% { height: 30%; }
+}
+@keyframes tf-waveform-4 {
+  0%, 100% { height: 40%; }
+  50% { height: 90%; }
+}
+
+.tf-waveform {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+  flex-shrink: 0;
+  padding: 0 2px;
+}
+
+.tf-waveform__bar {
+  width: 3px;
+  border-radius: 2px;
+  background: var(--tf-color-accent);
+}
+
+.tf-waveform__bar:nth-child(1) {
+  animation: tf-waveform-1 0.8s ease-in-out infinite;
+}
+.tf-waveform__bar:nth-child(2) {
+  animation: tf-waveform-2 0.7s ease-in-out infinite 0.15s;
+}
+.tf-waveform__bar:nth-child(3) {
+  animation: tf-waveform-3 0.9s ease-in-out infinite 0.05s;
+}
+.tf-waveform__bar:nth-child(4) {
+  animation: tf-waveform-4 0.75s ease-in-out infinite 0.25s;
+}
+
+.tf-waveform--paused .tf-waveform__bar {
+  animation-play-state: paused;
+}
+
+/* ── Entrance animation for list items ─────────── */
+
+@keyframes tf-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
-} */
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tf-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.tf-animate-in {
+  animation: tf-fade-in-up 350ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* Staggered entrance for list children */
+.tf-top-tracks__list > *,
+.tf-top-artists__list > *,
+.tf-recently-played__list > * {
+  animation: tf-fade-in-up 350ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.tf-top-tracks__list > *:nth-child(1),
+.tf-top-artists__list > *:nth-child(1),
+.tf-recently-played__list > *:nth-child(1) { animation-delay: 0ms; }
+.tf-top-tracks__list > *:nth-child(2),
+.tf-top-artists__list > *:nth-child(2),
+.tf-recently-played__list > *:nth-child(2) { animation-delay: 40ms; }
+.tf-top-tracks__list > *:nth-child(3),
+.tf-top-artists__list > *:nth-child(3),
+.tf-recently-played__list > *:nth-child(3) { animation-delay: 80ms; }
+.tf-top-tracks__list > *:nth-child(4),
+.tf-top-artists__list > *:nth-child(4),
+.tf-recently-played__list > *:nth-child(4) { animation-delay: 120ms; }
+.tf-top-tracks__list > *:nth-child(5),
+.tf-top-artists__list > *:nth-child(5),
+.tf-recently-played__list > *:nth-child(5) { animation-delay: 160ms; }
+.tf-top-tracks__list > *:nth-child(6),
+.tf-top-artists__list > *:nth-child(6),
+.tf-recently-played__list > *:nth-child(6) { animation-delay: 200ms; }
+.tf-top-tracks__list > *:nth-child(7),
+.tf-top-artists__list > *:nth-child(7),
+.tf-recently-played__list > *:nth-child(7) { animation-delay: 240ms; }
+.tf-top-tracks__list > *:nth-child(8),
+.tf-top-artists__list > *:nth-child(8),
+.tf-recently-played__list > *:nth-child(8) { animation-delay: 280ms; }
+.tf-top-tracks__list > *:nth-child(n+9),
+.tf-top-artists__list > *:nth-child(n+9),
+.tf-recently-played__list > *:nth-child(n+9) { animation-delay: 320ms; }
 
 /* ── NowPlaying ─────────────────────────────────── */
 
@@ -56,6 +208,12 @@
 
 .tf-now-playing--idle {
   opacity: 0.6;
+}
+
+.tf-now-playing--loading {
+  padding: var(--tf-space-md);
+  background: var(--tf-color-surface);
+  border-radius: var(--tf-radius);
 }
 
 .tf-now-playing__art {
@@ -83,7 +241,6 @@
 .tf-now-playing__track {
   font-size: var(--tf-font-size-base);
   font-weight: var(--tf-font-weight-medium);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -141,9 +298,11 @@
   display: flex;
   align-items: center;
   gap: var(--tf-space-md);
-  padding: var(--tf-space-sm);
+  padding: var(--tf-space-sm) var(--tf-space-md);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
+  border-radius: var(--tf-radius);
+  transition: background var(--tf-transition-speed);
 }
 
 .tf-track-card__rank {
@@ -166,31 +325,39 @@
 .tf-track-card__info {
   display: flex;
   flex-direction: column;
-  gap: 0;
+  gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .tf-track-card__name {
   font-size: var(--tf-font-size-base);
   font-weight: var(--tf-font-weight-medium);
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .tf-track-card__artist {
   font-size: var(--tf-font-size-sm);
   color: var(--tf-color-text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tf-track-card--grid {
   display: flex;
   flex-direction: column;
-  gap: var(--tf-space-xs);
+  gap: var(--tf-space-sm);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
   min-width: 0;
   overflow: hidden;
+  padding: var(--tf-space-sm);
+  border-radius: var(--tf-radius);
+  transition: background var(--tf-transition-speed);
 }
 
 .tf-track-card--grid .tf-track-card__art {
@@ -199,6 +366,10 @@
   aspect-ratio: 1;
   border-radius: var(--tf-radius);
   object-fit: cover;
+}
+
+.tf-track-card--grid .tf-track-card__name {
+  -webkit-line-clamp: 2;
 }
 
 /* ── TopTracks ──────────────────────────────────── */
@@ -231,10 +402,18 @@
   transition: all var(--tf-transition-speed);
 }
 
+.tf-top-tracks__selector-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .tf-top-tracks__selector-btn--active {
   background: var(--tf-color-accent);
   color: #fff;
   border-color: var(--tf-color-accent);
+}
+
+.tf-top-tracks__selector-btn--active:hover {
+  background: var(--tf-color-accent);
 }
 
 .tf-top-tracks--grid .tf-top-tracks__list {
@@ -260,6 +439,8 @@
   min-width: 0;
   padding: var(--tf-space-sm);
   overflow: hidden;
+  border-radius: var(--tf-radius);
+  transition: background var(--tf-transition-speed);
 }
 
 .tf-artist-card__photo {
@@ -283,21 +464,30 @@
 .tf-artist-card__name {
   font-size: var(--tf-font-size-base);
   font-weight: var(--tf-font-weight-medium);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .tf-artist-card--list {
   display: flex;
   align-items: center;
-  gap: var(--tf-space-sm);
-  padding: var(--tf-space-sm);
+  gap: var(--tf-space-md);
+  padding: var(--tf-space-sm) var(--tf-space-md);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
+  border-radius: var(--tf-radius);
+  transition: background var(--tf-transition-speed);
 }
 
 .tf-artist-card__info {
   display: flex;
   flex-direction: column;
   gap: var(--tf-space-xs);
+  min-width: 0;
+  flex: 1;
 }
 
 .tf-artist-card__genres {
@@ -344,10 +534,18 @@
   transition: all var(--tf-transition-speed);
 }
 
+.tf-top-artists__selector-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
 .tf-top-artists__selector-btn--active {
   background: var(--tf-color-accent);
   color: #fff;
   border-color: var(--tf-color-accent);
+}
+
+.tf-top-artists__selector-btn--active:hover {
+  background: var(--tf-color-accent);
 }
 
 .tf-top-artists--grid .tf-top-artists__list {
@@ -377,6 +575,7 @@
   display: flex;
   align-items: center;
   gap: var(--tf-space-sm);
+  padding: var(--tf-space-xs) 0;
 }
 
 .tf-recently-played__time {
@@ -430,9 +629,7 @@
 
 .tf-track-card--playable:hover,
 .tf-artist-card--playable:hover {
-  background: var(--tf-color-surface);
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  background: rgba(0, 0, 0, 0.05);
 }
 
 .tf-track-card--playable:active,
@@ -442,16 +639,30 @@
 
 .tf-track-card--playing {
   background: color-mix(in srgb, var(--tf-color-accent) 8%, transparent);
-  border-left: 3px solid var(--tf-color-accent);
-  padding-left: var(--tf-space-sm);
+}
+
+.tf-track-card--playing:hover {
+  background: color-mix(in srgb, var(--tf-color-accent) 12%, transparent);
+}
+
+.tf-track-card--playing .tf-track-card__name {
+  color: var(--tf-color-accent);
 }
 
 .tf-artist-card--playing {
   background: color-mix(in srgb, var(--tf-color-accent) 8%, transparent);
 }
 
+.tf-artist-card--playing:hover {
+  background: color-mix(in srgb, var(--tf-color-accent) 12%, transparent);
+}
+
+.tf-artist-card--playing .tf-artist-card__name {
+  color: var(--tf-color-accent);
+}
+
 .tf-artist-card--playing .tf-artist-card__photo {
-  box-shadow: 0 0 0 3px var(--tf-color-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--tf-color-accent) 50%, transparent);
 }
 
 /* ── PlaybackBar ───────────────────────────────────── */
@@ -479,6 +690,7 @@
   background: rgba(255, 255, 255, 0.1);
   cursor: pointer;
   position: relative;
+  transition: height 150ms ease;
 }
 
 .tf-playback-bar__progress:hover {
@@ -516,7 +728,7 @@
 .tf-playback-bar__track {
   display: flex;
   align-items: center;
-  gap: var(--tf-space-sm);
+  gap: var(--tf-space-md);
   flex: 1;
   min-width: 0;
 }
@@ -535,6 +747,7 @@
   flex-direction: column;
   gap: 2px;
   min-width: 0;
+  flex: 1;
 }
 
 .tf-playback-bar__name {
@@ -612,6 +825,7 @@
   position: fixed;
   z-index: 9999;
   width: var(--tf-playback-toast-width);
+  max-width: calc(100vw - 2 * var(--tf-space-lg));
   background: var(--tf-playback-bar-bg);
   color: var(--tf-playback-bar-text);
   border-radius: 12px;
@@ -729,7 +943,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--tf-space-sm);
-  padding: 0 var(--tf-space-md);
+  padding: 0 var(--tf-space-md) var(--tf-space-sm);
 }
 
 .tf-playback-toast__btn {

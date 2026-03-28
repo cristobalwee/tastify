@@ -36,7 +36,7 @@ export default function Showcase() {
         <PlaybackProvider ui="toast" toastPosition="bottom-right" playbackMode="embed">
           <div className="showcase-panels">
             <div className="showcase-panel">
-              <RecentlyPlayed limit={10} />
+              <RecentlyPlayed limit={8} />
             </div>
             <div className="showcase-panel">
               <TopArtists

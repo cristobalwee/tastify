@@ -2,9 +2,13 @@ import { TastifyClient } from '@tastify/core';
 import type { TimeRange } from '@tastify/core';
 import {
   renderNowPlaying,
+  renderNowPlayingSkeleton,
   renderTopTracks,
+  renderTopTracksSkeleton,
   renderTopArtists,
+  renderTopArtistsSkeleton,
   renderRecentlyPlayed,
+  renderRecentlyPlayedSkeleton,
 } from './templates.js';
 import type {
   NowPlayingOptions,
@@ -100,10 +104,38 @@ export function mount(
   let stopPolling: (() => void) | null = null;
   let animationFrameId: number | null = null;
 
+  function renderSkeleton(): void {
+    if (destroyed) return;
+    const { type } = opts;
+    let skeleton: HTMLElement;
+    if (type === 'now-playing') {
+      skeleton = renderNowPlayingSkeleton(opts);
+    } else if (type === 'top-tracks') {
+      skeleton = renderTopTracksSkeleton({
+        ...opts,
+        layout: (opts.layout as 'list' | 'grid') ?? 'list',
+      });
+    } else if (type === 'top-artists') {
+      skeleton = renderTopArtistsSkeleton({
+        ...opts,
+        layout: (opts.layout as 'grid' | 'list') ?? 'grid',
+      });
+    } else {
+      skeleton = renderRecentlyPlayedSkeleton({
+        ...opts,
+        layout: (opts.layout as 'timeline' | 'list') ?? 'list',
+      });
+    }
+    replaceChildren(target!, [skeleton]);
+  }
+
   function render(): void {
     if (destroyed) return;
 
     const { type } = opts;
+
+    // Show skeleton immediately while data loads
+    renderSkeleton();
 
     if (type === 'now-playing') {
       renderNowPlayingWidget();

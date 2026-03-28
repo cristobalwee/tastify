@@ -3,7 +3,7 @@
 import { useState, type ReactNode } from 'react';
 import type { TopTracksData, TimeRange } from '@tastify/core';
 import { useTopTracks } from '../hooks/useTopTracks.js';
-import { TrackCard } from './TrackCard.js';
+import { TrackCard, TrackCardSkeleton } from './TrackCard.js';
 
 const TIME_RANGE_LABELS: Record<TimeRange, string> = {
   short_term: '4 weeks',
@@ -22,6 +22,38 @@ export interface TopTracksProps {
   showTimeRangeSelector?: boolean;
   className?: string;
   children?: (data: TopTracksData) => ReactNode;
+}
+
+function TopTracksSkeleton({
+  layout = 'list',
+  limit = 5,
+  columns = 3,
+  header,
+  className,
+}: {
+  layout?: 'list' | 'grid';
+  limit?: number;
+  columns?: number;
+  header?: string | null;
+  className?: string;
+}) {
+  return (
+    <div className={cls(`tf-top-tracks tf-top-tracks--${layout}`, className)}>
+      {header !== null && <h3 className="tf-top-tracks__header">{header}</h3>}
+      <div
+        className="tf-top-tracks__list"
+        style={
+          layout === 'grid'
+            ? { gridTemplateColumns: `repeat(${columns}, 1fr)` }
+            : undefined
+        }
+      >
+        {Array.from({ length: limit }, (_, i) => (
+          <TrackCardSkeleton key={i} layout={layout} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function TopTracks({
@@ -43,7 +75,15 @@ export function TopTracks({
   const state = useTopTracks({ timeRange, limit });
 
   if (state.status === 'loading' || state.status === 'idle') {
-    return <div className={cls('tf-top-tracks tf-top-tracks--loading', className)} />;
+    return (
+      <TopTracksSkeleton
+        layout={layout}
+        limit={limit}
+        columns={columns}
+        header={header}
+        className={className}
+      />
+    );
   }
 
   if (state.status === 'error') {

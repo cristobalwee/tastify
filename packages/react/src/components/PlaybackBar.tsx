@@ -1,17 +1,22 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePlayback } from '../playback.js';
 
 export function PlaybackBar() {
   const { state, togglePlayPause, next, previous, seek, stop } = usePlayback();
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const lastTrackRef = useRef(state.currentTrack);
+
+  // Keep a reference to the last track so content doesn't flash empty during exit
+  if (state.currentTrack) {
+    lastTrackRef.current = state.currentTrack;
+  }
 
   useEffect(() => {
     if (state.currentTrack) {
       setMounted(true);
-      // Trigger entry animation on next frame
       requestAnimationFrame(() => {
         requestAnimationFrame(() => setVisible(true));
       });
@@ -23,14 +28,16 @@ export function PlaybackBar() {
   function handleTransitionEnd() {
     if (!visible && !state.currentTrack) {
       setMounted(false);
+      lastTrackRef.current = null;
     }
   }
 
   if (!mounted) return null;
 
-  const { currentTrack, isPlaying, progress } = state;
-  const art = currentTrack?.album.images[0]?.url;
-  const artistNames = currentTrack?.artists.map((a) => a.name).join(', ') ?? '';
+  const displayTrack = state.currentTrack ?? lastTrackRef.current;
+  const { isPlaying, progress } = state;
+  const art = displayTrack?.album.images[0]?.url;
+  const artistNames = displayTrack?.artists.map((a) => a.name).join(', ') ?? '';
 
   function handleProgressClick(e: React.MouseEvent<HTMLDivElement>) {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -55,12 +62,12 @@ export function PlaybackBar() {
             <img
               className="tf-playback-bar__art"
               src={art}
-              alt={currentTrack?.album.name}
+              alt={displayTrack?.album.name}
               loading="lazy"
             />
           )}
           <div className="tf-playback-bar__info">
-            <span className="tf-playback-bar__name">{currentTrack?.name}</span>
+            <span className="tf-playback-bar__name">{displayTrack?.name}</span>
             <span className="tf-playback-bar__artist">{artistNames}</span>
           </div>
         </div>
