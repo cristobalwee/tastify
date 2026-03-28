@@ -26,7 +26,7 @@ export function PlaybackSection({
   const tracksState = useTopTracks({ timeRange: 'medium_term', limit: 10 });
   const [selectedRange] = useState<'short_term' | 'medium_term' | 'long_term'>('medium_term');
 
-  const isSDK = playbackMode === 'sdk';
+  const isFullPlayback = playbackMode === 'sdk' || playbackMode === 'embed';
 
   const tracks =
     tracksState.status === 'success' ? tracksState.data.tracks : [];
@@ -35,8 +35,8 @@ export function PlaybackSection({
     const track = tracks[index];
     if (!track) return;
 
-    if (isSDK) {
-      // In SDK mode all tracks are playable
+    if (isFullPlayback) {
+      // In SDK/embed mode all tracks are playable
       setQueue(tracks, index);
     } else {
       if (!track.previewUrl) return;
@@ -47,11 +47,11 @@ export function PlaybackSection({
   }
 
   const code = ui === 'bar'
-    ? `<PlaybackProvider ui="bar" playbackMode="auto">
+    ? `<PlaybackProvider ui="bar">
   <PlaybackOverlay />
   {/* Click any track to play */}
 </PlaybackProvider>`
-    : `<PlaybackProvider ui="toast" toastPosition="${toastPosition}" playbackMode="auto">
+    : `<PlaybackProvider ui="toast" toastPosition="${toastPosition}">
   <PlaybackOverlay />
   {/* Click any track to play */}
 </PlaybackProvider>`;
@@ -59,8 +59,10 @@ export function PlaybackSection({
   return (
     <SectionLayout
       title="Playback"
-      description={isSDK
+      description={playbackMode === 'sdk'
         ? 'Full-track streaming via Spotify Web Playback SDK (Premium). Click a track below to start playing.'
+        : playbackMode === 'embed'
+        ? 'Spotify embed playback with ~30-second previews. Click a track below to start playing.'
         : 'Browser audio playback with 30-second Spotify previews. Click a track below to start playing, then use the controls in the playback bar or toast.'
       }
       code={code}
@@ -104,9 +106,9 @@ export function PlaybackSection({
           {tracks.map((track, i) => (
             <button
               key={track.id}
-              className={`playback-demo__track${state.currentTrack?.id === track.id ? ' playback-demo__track--active' : ''}${!isSDK && !track.previewUrl ? ' playback-demo__track--disabled' : ''}`}
+              className={`playback-demo__track${state.currentTrack?.id === track.id ? ' playback-demo__track--active' : ''}${!isFullPlayback && !track.previewUrl ? ' playback-demo__track--disabled' : ''}`}
               onClick={() => handleTrackClick(i)}
-              disabled={!isSDK && !track.previewUrl}
+              disabled={!isFullPlayback && !track.previewUrl}
             >
               {track.album.images[0]?.url && (
                 <img
@@ -125,7 +127,7 @@ export function PlaybackSection({
               {state.currentTrack?.id === track.id && state.isPlaying && (
                 <span className="tf-now-playing__pulse" />
               )}
-              {!isSDK && !track.previewUrl && (
+              {!isFullPlayback && !track.previewUrl && (
                 <span className="playback-demo__no-preview">No preview</span>
               )}
             </button>

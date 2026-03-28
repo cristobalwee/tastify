@@ -1,10 +1,12 @@
 /// <reference path="./spotify-sdk.d.ts" />
+/// <reference path="./spotify-embed.d.ts" />
 
 import type { TastifyTrack } from './types.js';
 import { loadSpotifySDK } from './sdk-loader.js';
+import { loadSpotifyEmbed } from './embed-loader.js';
 import { startPlayback, transferPlayback } from './endpoints.js';
 
-export type PlaybackMode = 'preview' | 'sdk';
+export type PlaybackMode = 'preview' | 'sdk' | 'embed';
 
 export interface PlaybackState {
   currentTrack: TastifyTrack | null;
@@ -483,10 +485,203 @@ async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> 
   return player;
 }
 
+// --- Spotify Embed (IFrame) player ---
+
+async function createEmbedPlayer(): Promise<AudioPlayer> {
+  const api = await loadSpotifyEmbed();
+
+  const listeners = new Map<PlaybackEvent, Set<() => void>>();
+  listeners.set('statechange', new Set());
+  listeners.set('trackchange', new Set());
+  listeners.set('ended', new Set());
+
+  function emit(event: PlaybackEvent): void {
+    const cbs = listeners.get(event);
+    if (cbs) {
+      for (const cb of cbs) {
+        cb();
+      }
+    }
+  }
+
+  let currentTrack: TastifyTrack | null = null;
+  let queue: TastifyTrack[] = [];
+  let queueIndex = -1;
+  let isPaused = true;
+  let position = 0;
+  let duration = 0;
+  let loadSeq = 0;
+  let ended = false;
+
+  // Create a hidden container for the embed iframe
+  const container = document.createElement('div');
+  container.style.cssText = 'width:1px;height:1px;position:absolute;left:-9999px;opacity:0;pointer-events:none;';
+  document.body.appendChild(container);
+
+  const controller = await new Promise<SpotifyEmbedController>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Spotify Embed controller creation timed out'));
+    }, 10_000);
+
+    try {
+      api.createController(container, { width: 1, height: 1 }, (ctrl) => {
+        clearTimeout(timeout);
+        resolve(ctrl);
+      });
+    } catch (err) {
+      clearTimeout(timeout);
+      reject(err);
+    }
+  });
+
+  controller.addListener('playback_update', (e) => {
+    const { isPaused: paused, position: pos, duration: dur } = e.data;
+    isPaused = paused;
+    position = pos;
+    duration = dur;
+
+    // Detect track ended: was playing, now paused, near the end
+    if (paused && dur > 0 && pos >= dur - 0.5 && !ended) {
+      ended = true;
+      emit('ended');
+      // Auto-advance to next track in queue
+      if (queueIndex < queue.length - 1) {
+        playIndex(queueIndex + 1);
+      }
+    }
+
+    emit('statechange');
+  });
+
+  function playIndex(index: number): void {
+    if (index < 0 || index >= queue.length) return;
+    queueIndex = index;
+    currentTrack = queue[index]!;
+    ended = false;
+    loadSeq++;
+    controller.loadUri(`spotify:track:${currentTrack.id}`);
+    controller.play();
+    emit('trackchange');
+    emit('statechange');
+  }
+
+  const player: AudioPlayer = {
+    play(track: TastifyTrack): void {
+      // If this track is already in the queue, navigate to it
+      const existingIndex = queue.findIndex((t) => t.id === track.id);
+      if (existingIndex !== -1) {
+        playIndex(existingIndex);
+        return;
+      }
+
+      currentTrack = track;
+      queue = [track];
+      queueIndex = 0;
+      ended = false;
+      loadSeq++;
+      controller.loadUri(`spotify:track:${track.id}`);
+      controller.play();
+      emit('trackchange');
+      emit('statechange');
+    },
+
+    pause(): void {
+      controller.pause();
+    },
+
+    resume(): void {
+      controller.resume();
+    },
+
+    togglePlayPause(): void {
+      controller.togglePlay();
+    },
+
+    seek(fraction: number): void {
+      if (duration > 0) {
+        const seconds = Math.max(0, Math.min(1, fraction)) * duration;
+        controller.seek(seconds);
+      }
+    },
+
+    getState(): PlaybackState {
+      return {
+        currentTrack,
+        isPlaying: !isPaused && !!currentTrack,
+        progress: duration > 0 ? position / duration : 0,
+        duration,
+        currentTime: position,
+        playbackMode: 'embed',
+      };
+    },
+
+    subscribe(event: PlaybackEvent, cb: () => void): () => void {
+      const cbs = listeners.get(event);
+      if (cbs) {
+        cbs.add(cb);
+      }
+      return () => {
+        cbs?.delete(cb);
+      };
+    },
+
+    setQueue(tracks: TastifyTrack[], startIndex = 0): void {
+      queue = [...tracks];
+      queueIndex = startIndex;
+      if (queue.length > 0 && startIndex >= 0 && startIndex < queue.length) {
+        playIndex(startIndex);
+      }
+    },
+
+    next(): void {
+      if (queueIndex < queue.length - 1) {
+        playIndex(queueIndex + 1);
+      }
+    },
+
+    previous(): void {
+      // If we're more than 3 seconds in, restart the track
+      if (position > 3) {
+        controller.seek(0);
+        return;
+      }
+      if (queueIndex > 0) {
+        playIndex(queueIndex - 1);
+      }
+    },
+
+    stop(): void {
+      controller.pause();
+      currentTrack = null;
+      queue = [];
+      queueIndex = -1;
+      isPaused = true;
+      position = 0;
+      duration = 0;
+      ended = false;
+      emit('trackchange');
+      emit('statechange');
+    },
+
+    destroy(): void {
+      player.stop();
+      controller.destroy();
+      if (container.parentNode) {
+        container.parentNode.removeChild(container);
+      }
+      for (const cbs of listeners.values()) {
+        cbs.clear();
+      }
+    },
+  };
+
+  return player;
+}
+
 // --- Singleton management ---
 
 let instance: AudioPlayer | null = null;
-let pendingSDK: Promise<AudioPlayer> | null = null;
+let pendingAsync: Promise<AudioPlayer> | null = null;
 
 export function getAudioPlayer(): AudioPlayer {
   if (!instance) {
@@ -504,22 +699,48 @@ export async function getOrCreateSDKPlayer(options: SDKPlayerOptions): Promise<A
     return instance;
   }
   // Deduplicate concurrent calls (e.g. React StrictMode double-mount)
-  if (pendingSDK) {
-    return pendingSDK;
+  if (pendingAsync) {
+    return pendingAsync;
   }
 
-  pendingSDK = (async () => {
+  pendingAsync = (async () => {
     try {
       instance = await createSDKPlayer(options);
     } catch {
       options.onPremiumRequired?.();
       instance = createAudioPlayer();
     }
-    pendingSDK = null;
+    pendingAsync = null;
     return instance!;
   })();
 
-  return pendingSDK;
+  return pendingAsync;
+}
+
+/**
+ * Creates an embed-backed audio player using the Spotify IFrame API.
+ * Plays ~30-second previews without requiring authentication.
+ * Falls back to the preview player if the embed API fails to load.
+ */
+export async function getOrCreateEmbedPlayer(): Promise<AudioPlayer> {
+  if (instance) {
+    return instance;
+  }
+  if (pendingAsync) {
+    return pendingAsync;
+  }
+
+  pendingAsync = (async () => {
+    try {
+      instance = await createEmbedPlayer();
+    } catch {
+      instance = createAudioPlayer();
+    }
+    pendingAsync = null;
+    return instance!;
+  })();
+
+  return pendingAsync;
 }
 
 export function resetAudioPlayer(): void {

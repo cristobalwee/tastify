@@ -283,7 +283,7 @@ export function App() {
         <div className="showcase__main-wrapper">
           <main className="showcase__main">
             <TastifyProvider token={activeToken}>
-              <PlaybackProvider ui={playbackUi} toastPosition={toastPosition} playbackMode="auto">
+              <PlaybackProvider ui={playbackUi} toastPosition={toastPosition} playbackMode="embed">
                 {section === 'now-playing' && <NowPlayingSection />}
                 {section === 'top-tracks' && <TopTracksSection />}
                 {section === 'top-artists' && <TopArtistsSection />}

@@ -119,16 +119,14 @@ img {
   width: 64px;
   height: 64px;
   margin: 0 auto 2rem;
-  background: var(--landing-accent);
-  border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .hero__logo svg {
-  width: 32px;
-  height: 32px;
+  width: 64px;
+  height: 64px;
 }
 
 .hero__heading {

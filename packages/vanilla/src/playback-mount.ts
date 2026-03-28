@@ -1,4 +1,4 @@
-import { getAudioPlayer, getOrCreateSDKPlayer, type AudioPlayer, type SDKPlayerOptions } from '@tastify/core';
+import { getAudioPlayer, getOrCreateSDKPlayer, getOrCreateEmbedPlayer, type AudioPlayer, type SDKPlayerOptions } from '@tastify/core';
 import { replaceChildren } from './renderer.js';
 import {
   renderPlaybackBar,
@@ -10,6 +10,8 @@ export interface PlaybackBarMountOptions {
   container?: HTMLElement;
   /** SDK options — if provided, uses Web Playback SDK instead of preview URLs. */
   sdk?: SDKPlayerOptions;
+  /** Use Spotify embed iframe for playback (no auth required). Default: true. */
+  embed?: boolean;
 }
 
 export interface PlaybackToastMountOptions {
@@ -17,6 +19,8 @@ export interface PlaybackToastMountOptions {
   container?: HTMLElement;
   /** SDK options — if provided, uses Web Playback SDK instead of preview URLs. */
   sdk?: SDKPlayerOptions;
+  /** Use Spotify embed iframe for playback (no auth required). Default: true. */
+  embed?: boolean;
 }
 
 export interface PlaybackWidget {
@@ -24,14 +28,17 @@ export interface PlaybackWidget {
   destroy(): void;
 }
 
-async function resolvePlayer(sdk?: SDKPlayerOptions): Promise<AudioPlayer> {
+async function resolvePlayer(sdk?: SDKPlayerOptions, embed = true): Promise<AudioPlayer> {
   if (sdk) {
     try {
       return await getOrCreateSDKPlayer(sdk);
     } catch {
       sdk.onPremiumRequired?.();
-      return getAudioPlayer();
+      return embed ? await getOrCreateEmbedPlayer() : getAudioPlayer();
     }
+  }
+  if (embed) {
+    return await getOrCreateEmbedPlayer();
   }
   return getAudioPlayer();
 }
@@ -42,7 +49,9 @@ export function mountPlaybackBar(options?: PlaybackBarMountOptions): PlaybackWid
     document.body.appendChild(container);
   }
 
-  let player: AudioPlayer | null = options?.sdk ? null : getAudioPlayer();
+  const useEmbed = options?.embed !== false;
+  const needsAsync = !!(options?.sdk || useEmbed);
+  let player: AudioPlayer | null = needsAsync ? null : getAudioPlayer();
   let destroyed = false;
   let unsub1: (() => void) | null = null;
   let unsub2: (() => void) | null = null;
@@ -74,7 +83,7 @@ export function mountPlaybackBar(options?: PlaybackBarMountOptions): PlaybackWid
   if (player) {
     bind(player);
   } else {
-    resolvePlayer(options?.sdk).then((p) => {
+    resolvePlayer(options?.sdk, useEmbed).then((p) => {
       if (!destroyed) bind(p);
     });
   }
@@ -103,7 +112,9 @@ export function mountPlaybackToast(options?: PlaybackToastMountOptions): Playbac
     document.body.appendChild(container);
   }
 
-  let player: AudioPlayer | null = options?.sdk ? null : getAudioPlayer();
+  const useEmbed = options?.embed !== false;
+  const needsAsync = !!(options?.sdk || useEmbed);
+  let player: AudioPlayer | null = needsAsync ? null : getAudioPlayer();
   let destroyed = false;
   let unsub1: (() => void) | null = null;
   let unsub2: (() => void) | null = null;
@@ -135,7 +146,7 @@ export function mountPlaybackToast(options?: PlaybackToastMountOptions): Playbac
   if (player) {
     bind(player);
   } else {
-    resolvePlayer(options?.sdk).then((p) => {
+    resolvePlayer(options?.sdk, useEmbed).then((p) => {
       if (!destroyed) bind(p);
     });
   }

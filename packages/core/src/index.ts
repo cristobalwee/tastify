@@ -4,6 +4,7 @@ export type { Poller } from './poller.js';
 export {
   getAudioPlayer,
   getOrCreateSDKPlayer,
+  getOrCreateEmbedPlayer,
   resetAudioPlayer,
   type AudioPlayer,
   type PlaybackState,
@@ -12,6 +13,7 @@ export {
   type SDKPlayerOptions,
 } from './audio-player.js';
 export { loadSpotifySDK } from './sdk-loader.js';
+export { loadSpotifyEmbed } from './embed-loader.js';
 export {
   TastifyError,
   type TastifyImage,

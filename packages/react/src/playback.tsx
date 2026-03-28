@@ -11,6 +11,7 @@ import {
 import {
   getAudioPlayer,
   getOrCreateSDKPlayer,
+  getOrCreateEmbedPlayer,
   type AudioPlayer,
   type PlaybackState,
   type PlaybackMode,
@@ -53,7 +54,7 @@ export const PlaybackContext = createContext<PlaybackContextValue | null>(null);
 
 export interface PlaybackProviderProps extends PlaybackConfig {
   children: ReactNode;
-  /** 'preview' uses preview URLs, 'sdk' uses Spotify Web Playback SDK (Premium required), 'auto' tries SDK first. */
+  /** 'embed' uses Spotify IFrame embeds (default), 'preview' uses preview URLs, 'sdk' uses Web Playback SDK (Premium), 'auto' tries SDK then embed. */
   playbackMode?: PlaybackMode | 'auto';
   /** Device name shown in Spotify Connect. */
   deviceName?: string;
@@ -69,13 +70,13 @@ const IDLE_STATE: PlaybackState = {
   progress: 0,
   duration: 0,
   currentTime: 0,
-  playbackMode: 'preview',
+  playbackMode: 'embed',
 };
 
 export function PlaybackProvider({
   ui,
   toastPosition = 'bottom-right',
-  playbackMode: requestedMode = 'auto',
+  playbackMode: requestedMode = 'embed',
   deviceName,
   volume,
   onPremiumRequired,
@@ -95,8 +96,10 @@ export function PlaybackProvider({
 
       if (requestedMode === 'preview') {
         p = getAudioPlayer();
+      } else if (requestedMode === 'embed') {
+        p = await getOrCreateEmbedPlayer();
       } else {
-        // 'sdk' or 'auto' — try SDK first
+        // 'sdk' or 'auto' — try SDK first, fall back to embed
         try {
           p = await getOrCreateSDKPlayer({
             getToken: () => client.getAccessToken(),
@@ -106,10 +109,9 @@ export function PlaybackProvider({
           });
         } catch {
           if (requestedMode === 'sdk') {
-            // SDK was explicitly requested but failed
             onPremiumRequired?.();
           }
-          p = getAudioPlayer();
+          p = await getOrCreateEmbedPlayer();
         }
       }
 
@@ -154,9 +156,9 @@ export function PlaybackProvider({
       if (!player) return;
       try {
         const tracks = await client.getArtistTopTracks(artist.id);
-        // In SDK mode all tracks are playable; in preview mode filter by previewUrl
+        // In SDK/embed mode all tracks are playable; in preview mode filter by previewUrl
         const playable =
-          state.playbackMode === 'sdk'
+          state.playbackMode === 'sdk' || state.playbackMode === 'embed'
             ? tracks
             : tracks.filter((t) => t.previewUrl);
         if (playable.length > 0) {

@@ -33,7 +33,7 @@ export default function Showcase() {
       </div>
 
       <TastifyProvider tokenUrl={tokenUrl}>
-        <PlaybackProvider ui="toast" toastPosition="bottom-right" playbackMode="auto">
+        <PlaybackProvider ui="toast" toastPosition="bottom-right" playbackMode="embed">
           <div className="showcase-panels">
             <div className="showcase-panel">
               <RecentlyPlayed limit={10} />
