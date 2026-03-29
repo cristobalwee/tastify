@@ -31,7 +31,7 @@ export default function Showcase() {
         </span>
       </div>
 
-      <TastifyProvider tokenUrl={tokenUrl}>
+      <TastifyProvider tokenUrl={tokenUrl} theme="auto">
         <PlaybackProvider ui="toast" toastPosition="bottom-right" playbackMode="embed">
           <div className="showcase-panels">
             <div className="showcase-panel">

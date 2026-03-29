@@ -229,9 +229,20 @@ describe('renderRecentlyPlayed', () => {
     expect(el.querySelectorAll('.tf-track-card').length).toBe(2);
   });
 
-  it('renders timeline layout', () => {
-    const el = renderRecentlyPlayed(data, { layout: 'timeline' });
-    expect(el.classList.contains('tf-recently-played--timeline')).toBe(true);
+  it('renders grid layout', () => {
+    const el = renderRecentlyPlayed(data, { layout: 'grid', columns: 2 });
+    expect(el.classList.contains('tf-recently-played--grid')).toBe(true);
+    const list = el.querySelector('.tf-recently-played__list') as HTMLElement;
+    expect(list.style.gridTemplateColumns).toBe('repeat(2, 1fr)');
+    expect(el.querySelectorAll('.tf-track-card--grid').length).toBe(2);
+  });
+
+  it('renders compact-grid layout', () => {
+    const el = renderRecentlyPlayed(data, { layout: 'compact-grid', columns: 3 });
+    expect(el.classList.contains('tf-recently-played--compact-grid')).toBe(true);
+    const list = el.querySelector('.tf-recently-played__list') as HTMLElement;
+    expect(list.style.gridTemplateColumns).toBe('repeat(3, 1fr)');
+    expect(el.querySelectorAll('.tf-track-card--compact-grid').length).toBe(2);
   });
 
   it('shows timestamps when showTimestamp=true', () => {

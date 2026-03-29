@@ -9,7 +9,7 @@ import { TimeRangeSelector } from './TimeRangeSelector.js';
 export interface TopTracksProps {
   timeRange?: TimeRange;
   limit?: number;
-  layout?: 'list' | 'grid';
+  layout?: 'list' | 'grid' | 'compact-grid';
   showRank?: boolean;
   showArt?: boolean;
   columns?: number;
@@ -64,7 +64,7 @@ export function TopTracks({
       <div
         className="tf-top-tracks__list"
         style={
-          layout === 'grid'
+          layout !== 'list'
             ? { gridTemplateColumns: `repeat(${columns}, 1fr)` }
             : undefined
         }
@@ -73,7 +73,7 @@ export function TopTracks({
           <TrackCard
             key={i}
             track={tracks[i]}
-            rank={layout === 'list' && showRank ? i + 1 : undefined}
+            rank={layout !== 'grid' && showRank ? i + 1 : undefined}
             showRank={showRank}
             showArt={showArt}
             layout={layout}

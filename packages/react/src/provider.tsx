@@ -10,11 +10,14 @@ import {
 } from 'react';
 import { TastifyClient, type TastifyConfig } from '@tastify/core';
 
+export type TastifyTheme = 'light' | 'dark' | 'auto';
+
 export interface TastifyProviderProps {
   tokenUrl?: string;
   getToken?: () => Promise<string>;
   token?: string;
   cacheTTL?: TastifyConfig['cacheTTL'];
+  theme?: TastifyTheme;
   children: ReactNode;
 }
 
@@ -33,6 +36,7 @@ export function TastifyProvider({
   getToken,
   token,
   cacheTTL,
+  theme,
   children,
 }: TastifyProviderProps) {
   const clientRef = useRef<TastifyClient | null>(null);
@@ -55,8 +59,18 @@ export function TastifyProvider({
     };
   }, []);
 
+  const themeAttr = theme && theme !== 'light' ? theme : undefined;
+
   return (
-    <TastifyContext.Provider value={client}>{children}</TastifyContext.Provider>
+    <TastifyContext.Provider value={client}>
+      {themeAttr ? (
+        <div data-tf-theme={themeAttr} style={{ display: 'contents' }}>
+          {children}
+        </div>
+      ) : (
+        children
+      )}
+    </TastifyContext.Provider>
   );
 }
 

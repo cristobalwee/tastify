@@ -7,3 +7,4 @@ coverage
 .env/
 .env.local/
 packages/cli/.env
+packages/cli/.env.local

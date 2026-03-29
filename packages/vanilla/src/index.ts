@@ -1,5 +1,5 @@
 export { mount } from './mount.js';
-export type { MountOptions, MountedWidget } from './mount.js';
+export type { MountOptions, MountedWidget, TastifyTheme } from './mount.js';
 export { mountPlaybackBar, mountPlaybackToast } from './playback-mount.js';
 export type { PlaybackBarMountOptions, PlaybackToastMountOptions, PlaybackWidget } from './playback-mount.js';
 

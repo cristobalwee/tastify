@@ -4,12 +4,12 @@ import { PlaybackContext } from '../playback.js';
 
 interface ArtistCardProps {
   artist?: TastifyArtist;
-  layout: 'grid' | 'list';
+  layout: 'grid' | 'list' | 'compact-grid';
   showGenres?: boolean;
   onPlay?: (artist: TastifyArtist) => void;
 }
 
-export function ArtistCardSkeleton({ layout }: { layout: 'grid' | 'list' }) {
+export function ArtistCardSkeleton({ layout }: { layout: 'grid' | 'list' | 'compact-grid' }) {
   return <ArtistCard layout={layout} />;
 }
 

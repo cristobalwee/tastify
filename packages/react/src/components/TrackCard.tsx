@@ -7,7 +7,7 @@ interface TrackCardProps {
   rank?: number;
   showArt?: boolean;
   showRank?: boolean;
-  layout: 'list' | 'grid';
+  layout: 'list' | 'grid' | 'compact-grid';
   interactive?: boolean;
   onPlay?: (track: TastifyTrack) => void;
   timestamp?: string;
@@ -25,7 +25,7 @@ function Waveform({ paused }: { paused?: boolean }) {
   );
 }
 
-export function TrackCardSkeleton({ layout, showRank }: { layout: 'list' | 'grid'; showRank?: boolean }) {
+export function TrackCardSkeleton({ layout, showRank }: { layout: 'list' | 'grid' | 'compact-grid'; showRank?: boolean }) {
   return <TrackCard layout={layout} showRank={showRank} />;
 }
 

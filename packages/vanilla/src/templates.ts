@@ -27,7 +27,7 @@ export interface NowPlayingOptions {
 export interface TopTracksOptions {
   timeRange?: TimeRange;
   limit?: number;
-  layout?: 'list' | 'grid';
+  layout?: 'list' | 'grid' | 'compact-grid';
   showRank?: boolean;
   showArt?: boolean;
   columns?: number;
@@ -38,7 +38,7 @@ export interface TopTracksOptions {
 export interface TopArtistsOptions {
   timeRange?: TimeRange;
   limit?: number;
-  layout?: 'grid' | 'list';
+  layout?: 'grid' | 'list' | 'compact-grid';
   columns?: number;
   showGenres?: boolean;
   header?: string | null;
@@ -47,9 +47,10 @@ export interface TopArtistsOptions {
 
 export interface RecentlyPlayedOptions {
   limit?: number;
-  layout?: 'timeline' | 'list';
+  layout?: 'list' | 'grid' | 'compact-grid';
   showTimestamp?: boolean;
   groupByDay?: boolean;
+  columns?: number;
   header?: string | null;
 }
 
@@ -62,7 +63,7 @@ function createWaveform(): HTMLElement {
   ]);
 }
 
-function buildTrackCardSkeleton(layout: 'list' | 'grid', showRank?: boolean, showTimestamp?: boolean): HTMLElement {
+function buildTrackCardSkeleton(layout: 'list' | 'grid' | 'compact-grid', showRank?: boolean, showTimestamp?: boolean): HTMLElement {
   if (layout === 'grid') {
     return h('div', { class: 'tf-card__skeleton' }, [
       h('div', { class: 'tf-skeleton tf-skeleton--art-grid' }),
@@ -89,7 +90,7 @@ function buildTrackCardSkeleton(layout: 'list' | 'grid', showRank?: boolean, sho
 
 function buildTrackCardContent(
   track: TastifyTrack,
-  layout: 'list' | 'grid',
+  layout: 'list' | 'grid' | 'compact-grid',
   opts: {
     rank?: number;
     showArt?: boolean;
@@ -145,7 +146,7 @@ function buildTrackCardContent(
 
 export function renderTrackCard(
   track: TastifyTrack | undefined,
-  layout: 'list' | 'grid',
+  layout: 'list' | 'grid' | 'compact-grid',
   opts: {
     rank?: number;
     showRank?: boolean;
@@ -204,14 +205,17 @@ export function populateTrackCard(
     onPlay?: (track: TastifyTrack) => void;
     isPlaying?: boolean;
     isPaused?: boolean;
+    timestamp?: string;
   },
 ): void {
-  const layout = card.classList.contains('tf-track-card--grid') ? 'grid' : 'list';
+  const layout = card.classList.contains('tf-track-card--grid') ? 'grid'
+    : card.classList.contains('tf-track-card--compact-grid') ? 'compact-grid'
+    : 'list';
   const oldContent = card.querySelector('.tf-card__content');
   if (!oldContent) return;
 
-  const newContent = buildTrackCardContent(track, layout as 'list' | 'grid', opts);
-  oldContent.replaceWith(newContent);
+  const newContent = buildTrackCardContent(track, layout, opts);
+  oldContent.replaceChildren(...Array.from(newContent.childNodes));
 
   card.classList.add('tf-track-card--loaded');
 
@@ -235,11 +239,11 @@ export function populateTrackCard(
   if (opts.isPlaying) card.classList.add('tf-track-card--playing');
 }
 
-export function renderTrackCardSkeleton(layout: 'list' | 'grid', showRank?: boolean): HTMLElement {
+export function renderTrackCardSkeleton(layout: 'list' | 'grid' | 'compact-grid', showRank?: boolean): HTMLElement {
   return renderTrackCard(undefined, layout, { showRank });
 }
 
-function buildArtistCardSkeleton(layout: 'grid' | 'list'): HTMLElement {
+function buildArtistCardSkeleton(layout: 'grid' | 'list' | 'compact-grid'): HTMLElement {
   if (layout === 'grid') {
     return h('div', { class: 'tf-card__skeleton' }, [
       h('div', { class: 'tf-skeleton tf-skeleton--photo-circle' }),
@@ -256,7 +260,7 @@ function buildArtistCardSkeleton(layout: 'grid' | 'list'): HTMLElement {
 
 function buildArtistCardContent(
   artist: TastifyArtist,
-  layout: 'grid' | 'list',
+  layout: 'grid' | 'list' | 'compact-grid',
   showGenres: boolean,
 ): HTMLElement {
   const photo = artist.images[0]?.url;
@@ -299,7 +303,7 @@ function buildArtistCardContent(
 
 export function renderArtistCard(
   artist: TastifyArtist | undefined,
-  layout: 'grid' | 'list',
+  layout: 'grid' | 'list' | 'compact-grid',
   showGenres: boolean,
   onPlay?: (artist: TastifyArtist) => void,
 ): HTMLElement {
@@ -344,11 +348,13 @@ export function populateArtistCard(
   showGenres: boolean,
   onPlay?: (artist: TastifyArtist) => void,
 ): void {
-  const layout = card.classList.contains('tf-artist-card--grid') ? 'grid' : 'list';
+  const layout = card.classList.contains('tf-artist-card--grid') ? 'grid'
+    : card.classList.contains('tf-artist-card--compact-grid') ? 'compact-grid'
+    : 'list';
   const oldContent = card.querySelector('.tf-card__content');
   if (!oldContent) return;
 
-  const newContent = buildArtistCardContent(artist, layout as 'grid' | 'list', showGenres);
+  const newContent = buildArtistCardContent(artist, layout, showGenres);
   oldContent.replaceWith(newContent);
 
   card.classList.add('tf-artist-card--loaded');
@@ -371,11 +377,11 @@ export function populateArtistCard(
   }
 }
 
-function renderArtistCardSkeleton(layout: 'grid' | 'list'): HTMLElement {
+function renderArtistCardSkeleton(layout: 'grid' | 'list' | 'compact-grid'): HTMLElement {
   return renderArtistCard(undefined, layout, false);
 }
 
-function formatRelativeTime(dateStr: string): string {
+export function formatRelativeTime(dateStr: string): string {
   const now = Date.now();
   const then = new Date(dateStr).getTime();
   const diffMs = now - then;
@@ -533,7 +539,7 @@ export function renderTopTracksSkeleton(opts: TopTracksOptions): HTMLElement {
     Array.from({ length: limit }, () => renderTrackCardSkeleton(layout, showRank)),
   );
 
-  if (layout === 'grid') {
+  if (layout !== 'list') {
     setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
   }
 
@@ -571,13 +577,13 @@ export function renderTopTracks(
     { class: 'tf-top-tracks__list' },
     data.tracks.map((track, i) =>
       renderTrackCard(track, layout, {
-        rank: layout === 'list' && showRank ? i + 1 : undefined,
+        rank: layout !== 'grid' && showRank ? i + 1 : undefined,
         showArt,
       }),
     ),
   );
 
-  if (layout === 'grid') {
+  if (layout !== 'list') {
     setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
   }
 
@@ -610,7 +616,7 @@ export function renderTopArtistsSkeleton(opts: TopArtistsOptions): HTMLElement {
     Array.from({ length: limit }, () => renderArtistCardSkeleton(layout)),
   );
 
-  if (layout === 'grid') {
+  if (layout !== 'list') {
     setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
   }
 
@@ -648,7 +654,7 @@ export function renderTopArtists(
     data.artists.map((artist) => renderArtistCard(artist, layout, showGenres)),
   );
 
-  if (layout === 'grid') {
+  if (layout !== 'list') {
     setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
   }
 
@@ -661,9 +667,12 @@ export function renderRecentlyPlayedSkeleton(opts: RecentlyPlayedOptions): HTMLE
   const {
     layout = 'list',
     limit = 10,
+    columns = 3,
     header = 'Recently Played',
     showTimestamp = true,
   } = opts;
+
+  const cardLayout = layout === 'grid' ? 'grid' : layout === 'compact-grid' ? 'compact-grid' : 'list';
 
   const children: (HTMLElement | Text)[] = [];
   if (header !== null) {
@@ -671,10 +680,15 @@ export function renderRecentlyPlayedSkeleton(opts: RecentlyPlayedOptions): HTMLE
   }
 
   const itemEls = Array.from({ length: Math.min(limit, 5) }, () =>
-    renderTrackCard(undefined, 'list', { showTimestamp }),
+    renderTrackCard(undefined, cardLayout, { showTimestamp }),
   );
 
-  children.push(h('div', { class: 'tf-recently-played__list' }, itemEls));
+  const listEl = h('div', { class: 'tf-recently-played__list' }, itemEls);
+  if (layout !== 'list') {
+    setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
+  }
+
+  children.push(listEl);
   return h('div', { class: `tf-recently-played tf-recently-played--${layout}` }, children);
 }
 
@@ -682,9 +696,10 @@ function renderRecentlyPlayedItem(
   track: TastifyTrack,
   playedAt: string,
   showTimestamp: boolean,
+  layout: 'list' | 'grid' | 'compact-grid' = 'list',
   onPlay?: (track: TastifyTrack) => void,
 ): HTMLElement {
-  return renderTrackCard(track, 'list', {
+  return renderTrackCard(track, layout, {
     showArt: true,
     onPlay,
     showTimestamp,
@@ -701,8 +716,11 @@ export function renderRecentlyPlayed(
     layout = 'list',
     showTimestamp = true,
     groupByDay = false,
+    columns = 3,
     header = 'Recently Played',
   } = opts;
+
+  const cardLayout = layout === 'grid' ? 'grid' : layout === 'compact-grid' ? 'compact-grid' : 'list';
 
   const children: (HTMLElement | Text)[] = [];
 
@@ -711,6 +729,14 @@ export function renderRecentlyPlayed(
   }
 
   const items = data.tracks;
+
+  function makeListEl(itemEls: HTMLElement[]): HTMLElement {
+    const listEl = h('div', { class: 'tf-recently-played__list' }, itemEls);
+    if (layout !== 'list') {
+      setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
+    }
+    return listEl;
+  }
 
   if (groupByDay) {
     const grouped = new Map<string, typeof items>();
@@ -726,22 +752,22 @@ export function renderRecentlyPlayed(
 
     for (const [day, dayItems] of grouped) {
       const itemEls = dayItems.map((item) =>
-        renderRecentlyPlayedItem(item.track, item.playedAt, showTimestamp, onPlay),
+        renderRecentlyPlayedItem(item.track, item.playedAt, showTimestamp, cardLayout, onPlay),
       );
 
       children.push(
         h('div', { class: 'tf-recently-played__group' }, [
           h('h4', { class: 'tf-recently-played__day' }, [day]),
-          h('div', { class: 'tf-recently-played__list' }, itemEls),
+          makeListEl(itemEls),
         ]),
       );
     }
   } else {
     const itemEls = items.map((item) =>
-      renderRecentlyPlayedItem(item.track, item.playedAt, showTimestamp, onPlay),
+      renderRecentlyPlayedItem(item.track, item.playedAt, showTimestamp, cardLayout, onPlay),
     );
 
-    children.push(h('div', { class: 'tf-recently-played__list' }, itemEls));
+    children.push(makeListEl(itemEls));
   }
 
   return h('div', { class: `tf-recently-played tf-recently-played--${layout}` }, children);

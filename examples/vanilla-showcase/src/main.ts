@@ -493,7 +493,7 @@ function renderNowPlayingSection(main: HTMLElement) {
 /* ── TopTracks Section ───────────────────────────── */
 
 function renderTopTracksSection(main: HTMLElement) {
-  let layout: 'list' | 'grid' = 'list';
+  let layout: 'list' | 'grid' | 'compact-grid' = 'list';
   let timeRange: TimeRange = 'medium_term';
   let limit = 5;
   let showRank = true;
@@ -510,7 +510,7 @@ function renderTopTracksSection(main: HTMLElement) {
   limit: ${limit},
   showRank: ${showRank},
   showArt: ${showArt},
-  showTimeRangeSelector: ${showTimeRangeSelector},${layout === 'grid' ? `\n  columns: ${columns},` : ''}
+  showTimeRangeSelector: ${showTimeRangeSelector},${layout !== 'list' ? `\n  columns: ${columns},` : ''}
 })`;
   }
 
@@ -527,11 +527,12 @@ function renderTopTracksSection(main: HTMLElement) {
         selectControl('layout', layout, [
           { value: 'list', label: 'list' },
           { value: 'grid', label: 'grid' },
+          { value: 'compact-grid', label: 'compact-grid' },
         ], (v) => {
           layout = v;
           currentWidget?.update(getOpts());
           updateCode(main, getCode());
-          if (columnsControl) columnsControl.style.display = v === 'grid' ? '' : 'none';
+          if (columnsControl) columnsControl.style.display = v !== 'list' ? '' : 'none';
         }),
         selectControl('timeRange', timeRange, [
           { value: 'short_term', label: 'short_term (4 weeks)' },
@@ -544,7 +545,7 @@ function renderTopTracksSection(main: HTMLElement) {
         toggleControl('showTimeRangeSelector', showTimeRangeSelector, (v) => { showTimeRangeSelector = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
       );
       columnsControl = numberControl('columns', columns, 1, 6, (v) => { columns = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); });
-      columnsControl.style.display = layout === 'grid' ? '' : 'none';
+      columnsControl.style.display = layout !== 'list' ? '' : 'none';
       panel.append(columnsControl);
     },
   });
@@ -565,7 +566,7 @@ function renderTopTracksSection(main: HTMLElement) {
 /* ── TopArtists Section ──────────────────────────── */
 
 function renderTopArtistsSection(main: HTMLElement) {
-  let layout: 'grid' | 'list' = 'grid';
+  let layout: 'grid' | 'list' | 'compact-grid' = 'grid';
   let timeRange: TimeRange = 'medium_term';
   let limit = 6;
   let showGenres = false;
@@ -580,7 +581,7 @@ function renderTopArtistsSection(main: HTMLElement) {
   timeRange: '${timeRange}',
   limit: ${limit},
   showGenres: ${showGenres},
-  showTimeRangeSelector: ${showTimeRangeSelector},${layout === 'grid' ? `\n  columns: ${columns},` : ''}
+  showTimeRangeSelector: ${showTimeRangeSelector},${layout !== 'list' ? `\n  columns: ${columns},` : ''}
 })`;
   }
 
@@ -597,11 +598,12 @@ function renderTopArtistsSection(main: HTMLElement) {
         selectControl('layout', layout, [
           { value: 'grid', label: 'grid' },
           { value: 'list', label: 'list' },
+          { value: 'compact-grid', label: 'compact-grid' },
         ], (v) => {
           layout = v;
           currentWidget?.update(getOpts());
           updateCode(main, getCode());
-          if (columnsControl) columnsControl.style.display = v === 'grid' ? '' : 'none';
+          if (columnsControl) columnsControl.style.display = v !== 'list' ? '' : 'none';
         }),
         selectControl('timeRange', timeRange, [
           { value: 'short_term', label: 'short_term (4 weeks)' },
@@ -613,7 +615,7 @@ function renderTopArtistsSection(main: HTMLElement) {
         toggleControl('showTimeRangeSelector', showTimeRangeSelector, (v) => { showTimeRangeSelector = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
       );
       columnsControl = numberControl('columns', columns, 1, 6, (v) => { columns = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); });
-      columnsControl.style.display = layout === 'grid' ? '' : 'none';
+      columnsControl.style.display = layout !== 'list' ? '' : 'none';
       panel.append(columnsControl);
     },
   });
@@ -633,8 +635,9 @@ function renderTopArtistsSection(main: HTMLElement) {
 /* ── RecentlyPlayed Section ──────────────────────── */
 
 function renderRecentlyPlayedSection(main: HTMLElement) {
-  let layout: 'list' | 'timeline' = 'list';
+  let layout: 'list' | 'grid' | 'compact-grid' = 'list';
   let limit = 10;
+  let columns = 3;
   let showTimestamp = true;
   let groupByDay = false;
 
@@ -643,28 +646,39 @@ function renderRecentlyPlayedSection(main: HTMLElement) {
   type: 'recently-played',
   token: '...',
   layout: '${layout}',
-  limit: ${limit},
+  limit: ${limit},${layout !== 'list' ? `\n  columns: ${columns},` : ''}
   showTimestamp: ${showTimestamp},
   groupByDay: ${groupByDay},
 })`;
   }
 
   function getOpts(): Partial<MountOptions> {
-    return { layout, limit, showTimestamp, groupByDay };
+    return { layout, limit, columns, showTimestamp, groupByDay };
   }
 
-  const target = sectionLayout(main, 'RecentlyPlayed', 'Shows recently played tracks as a list or timeline, with optional day grouping.', {
+  let columnsControl: HTMLLabelElement | null = null;
+
+  const target = sectionLayout(main, 'RecentlyPlayed', 'Shows recently played tracks as a list or grid, with optional day grouping.', {
     codeText: getCode(),
     buildControls(panel) {
       panel.append(
         selectControl('layout', layout, [
           { value: 'list', label: 'list' },
-          { value: 'timeline', label: 'timeline' },
-        ], (v) => { layout = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
+          { value: 'grid', label: 'grid' },
+          { value: 'compact-grid', label: 'compact-grid' },
+        ], (v) => {
+          layout = v;
+          currentWidget?.update(getOpts());
+          updateCode(main, getCode());
+          if (columnsControl) columnsControl.style.display = v !== 'list' ? '' : 'none';
+        }),
         numberControl('limit', limit, 1, 50, (v) => { limit = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
         toggleControl('showTimestamp', showTimestamp, (v) => { showTimestamp = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
         toggleControl('groupByDay', groupByDay, (v) => { groupByDay = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
       );
+      columnsControl = numberControl('columns', columns, 1, 6, (v) => { columns = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); });
+      columnsControl.style.display = layout !== 'list' ? '' : 'none';
+      panel.append(columnsControl);
     },
   });
 

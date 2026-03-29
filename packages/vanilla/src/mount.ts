@@ -5,11 +5,11 @@ import {
   renderNowPlayingSkeleton,
   renderTopTracksSkeleton,
   renderTopArtistsSkeleton,
-  renderRecentlyPlayed,
   renderRecentlyPlayedSkeleton,
   renderTimeRangeSelector,
   populateTrackCard,
   populateArtistCard,
+  formatRelativeTime,
 } from './templates.js';
 import type {
   NowPlayingOptions,
@@ -17,11 +17,14 @@ import type {
 } from './templates.js';
 import { replaceChildren } from './renderer.js';
 
+export type TastifyTheme = 'light' | 'dark' | 'auto';
+
 export interface MountOptions {
   type: 'now-playing' | 'top-tracks' | 'top-artists' | 'recently-played';
   tokenUrl?: string;
   getToken?: () => Promise<string>;
   token?: string;
+  theme?: TastifyTheme;
   // NowPlaying
   compact?: boolean;
   showArt?: boolean;
@@ -32,7 +35,7 @@ export interface MountOptions {
   // TopTracks / TopArtists
   timeRange?: TimeRange;
   limit?: number;
-  layout?: 'list' | 'grid' | 'timeline';
+  layout?: 'list' | 'grid' | 'compact-grid';
   showRank?: boolean;
   columns?: number;
   header?: string | null;
@@ -103,6 +106,16 @@ export function mount(
   let stopPolling: (() => void) | null = null;
   let animationFrameId: number | null = null;
 
+  function applyTheme(): void {
+    const theme = opts.theme;
+    if (theme && theme !== 'light') {
+      target!.setAttribute('data-tf-theme', theme);
+    } else {
+      target!.removeAttribute('data-tf-theme');
+    }
+  }
+  applyTheme();
+
   function renderSkeleton(): void {
     if (destroyed) return;
     const { type } = opts;
@@ -112,17 +125,17 @@ export function mount(
     } else if (type === 'top-tracks') {
       skeleton = renderTopTracksSkeleton({
         ...opts,
-        layout: (opts.layout as 'list' | 'grid') ?? 'list',
+        layout: (opts.layout as 'list' | 'grid' | 'compact-grid') ?? 'list',
       });
     } else if (type === 'top-artists') {
       skeleton = renderTopArtistsSkeleton({
         ...opts,
-        layout: (opts.layout as 'grid' | 'list') ?? 'grid',
+        layout: (opts.layout as 'grid' | 'list' | 'compact-grid') ?? 'grid',
       });
     } else {
       skeleton = renderRecentlyPlayedSkeleton({
         ...opts,
-        layout: (opts.layout as 'timeline' | 'list') ?? 'list',
+        layout: (opts.layout as 'list' | 'grid' | 'compact-grid') ?? 'list',
       });
     }
     replaceChildren(target!, [skeleton]);
@@ -205,7 +218,7 @@ export function mount(
         .then((data) => {
           if (destroyed) return;
 
-          const layout = (opts.layout as 'list' | 'grid') ?? 'list';
+          const layout = (opts.layout as 'list' | 'grid' | 'compact-grid') ?? 'list';
           const showRank = opts.showRank !== false;
           const showArt = opts.showArt !== false;
 
@@ -225,7 +238,7 @@ export function mount(
           data.tracks.forEach((track, i) => {
             if (i < cards.length) {
               populateTrackCard(cards[i]!, track, {
-                rank: layout === 'list' && showRank ? i + 1 : undefined,
+                rank: layout !== 'grid' && showRank ? i + 1 : undefined,
                 showArt,
                 onPlay: opts.onTrackPlay,
               });
@@ -283,16 +296,27 @@ export function mount(
   }
 
   function renderRecentlyPlayedWidget(): void {
+    const showTimestamp = opts.showTimestamp !== false;
+
     client
       .getRecentlyPlayed({ limit: opts.limit })
       .then((data) => {
         if (destroyed) return;
-        const rpOpts: RecentlyPlayedOptions = {
-          ...opts,
-          layout: (opts.layout as 'timeline' | 'list') ?? 'list',
-        };
-        const el = renderRecentlyPlayed(data, rpOpts, opts.onTrackPlay);
-        replaceChildren(target!, [el]);
+
+        const cards = Array.from(target!.querySelectorAll<HTMLElement>('.tf-track-card'));
+        data.tracks.forEach((item, i) => {
+          if (i < cards.length) {
+            populateTrackCard(cards[i]!, item.track, {
+              showArt: true,
+              onPlay: opts.onTrackPlay,
+              timestamp: showTimestamp ? formatRelativeTime(item.playedAt) : undefined,
+            });
+          }
+        });
+
+        for (let i = data.tracks.length; i < cards.length; i++) {
+          cards[i]!.remove();
+        }
       })
       .catch(() => {});
   }
@@ -323,6 +347,8 @@ export function mount(
       } else {
         opts = { ...opts, ...newOpts };
       }
+
+      applyTheme();
 
       // Re-render with new options
       if (stopPolling) {

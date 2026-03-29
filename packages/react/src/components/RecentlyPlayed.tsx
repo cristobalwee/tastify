@@ -7,9 +7,10 @@ import { TrackCard } from './TrackCard.js';
 
 export interface RecentlyPlayedProps {
   limit?: number;
-  layout?: 'timeline' | 'list';
+  layout?: 'list' | 'grid' | 'compact-grid';
   showTimestamp?: boolean;
   groupByDay?: boolean;
+  columns?: number;
   header?: string | null;
   className?: string;
   children?: (data: RecentlyPlayedData) => ReactNode;
@@ -44,6 +45,7 @@ export function RecentlyPlayed({
   layout = 'list',
   showTimestamp = true,
   groupByDay = false,
+  columns = 3,
   header = 'Recently Played',
   className,
   children,
@@ -78,6 +80,11 @@ export function RecentlyPlayed({
     }
   }
 
+  const cardLayout = layout === 'grid' ? 'grid' : layout === 'compact-grid' ? 'compact-grid' : 'list';
+  const gridStyle = layout !== 'list'
+    ? { gridTemplateColumns: `repeat(${columns}, 1fr)` }
+    : undefined;
+
   return (
     <div
       className={cls(
@@ -92,13 +99,13 @@ export function RecentlyPlayed({
         ? Array.from(grouped.entries()).map(([day, dayItems]) => (
             <div key={day} className="tf-recently-played__group">
               <h4 className="tf-recently-played__day">{day}</h4>
-              <div className="tf-recently-played__list">
+              <div className="tf-recently-played__list" style={gridStyle}>
                 {dayItems.map((item, i) => (
                   <TrackCard
                     key={i}
                     track={item.track}
                     showArt
-                    layout="list"
+                    layout={cardLayout}
                     showTimestamp={showTimestamp}
                     timestamp={formatRelativeTime(item.playedAt)}
                   />
@@ -107,13 +114,13 @@ export function RecentlyPlayed({
             </div>
           ))
         : (
-            <div className="tf-recently-played__list">
+            <div className="tf-recently-played__list" style={gridStyle}>
               {Array.from({ length: itemCount }, (_, i) => (
                 <TrackCard
                   key={i}
                   track={items[i]?.track}
                   showArt
-                  layout="list"
+                  layout={cardLayout}
                   showTimestamp={showTimestamp}
                   timestamp={items[i]?.playedAt ? formatRelativeTime(items[i].playedAt) : undefined}
                 />

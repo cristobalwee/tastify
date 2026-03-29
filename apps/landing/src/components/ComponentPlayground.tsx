@@ -126,7 +126,7 @@ function NowPlayingSection() {
 function TopTracksSection() {
   const [timeRange, setTimeRange] = useState<TimeRange>('medium_term');
   const [limit, setLimit] = useState(5);
-  const [layout, setLayout] = useState<'list' | 'grid'>('list');
+  const [layout, setLayout] = useState<'list' | 'grid' | 'compact-grid'>('list');
   const [showRank, setShowRank] = useState(true);
   const [showArt, setShowArt] = useState(true);
   const [columns, setColumns] = useState(3);
@@ -138,7 +138,7 @@ function TopTracksSection() {
   if (layout !== 'list') codeParts.push(`  layout="${layout}"`);
   if (!showRank) codeParts.push('  showRank={false}');
   if (!showArt) codeParts.push('  showArt={false}');
-  if (layout === 'grid' && columns !== 3) codeParts.push(`  columns={${columns}}`);
+  if (layout !== 'list' && columns !== 3) codeParts.push(`  columns={${columns}}`);
   if (showTimeRangeSelector) codeParts.push('  showTimeRangeSelector');
   codeParts.push('/>');
   const code = codeParts.length <= 2 ? codeParts.join(' ') : codeParts.join('\n');
@@ -163,10 +163,11 @@ function TopTracksSection() {
           options={[
             { value: 'list', label: 'List' },
             { value: 'grid', label: 'Grid' },
+            { value: 'compact-grid', label: 'Compact Grid' },
           ]}
           onChange={setLayout}
         />
-        {layout === 'grid' && (
+        {layout !== 'list' && (
           <NumberInput label="columns" value={columns} min={2} max={5} onChange={setColumns} />
         )}
         <Toggle label="showRank" value={showRank} onChange={setShowRank} />
@@ -192,7 +193,7 @@ function TopTracksSection() {
 function TopArtistsSection() {
   const [timeRange, setTimeRange] = useState<TimeRange>('medium_term');
   const [limit, setLimit] = useState(6);
-  const [layout, setLayout] = useState<'grid' | 'list'>('grid');
+  const [layout, setLayout] = useState<'grid' | 'list' | 'compact-grid'>('grid');
   const [columns, setColumns] = useState(3);
   const [showGenres, setShowGenres] = useState(false);
   const [showTimeRangeSelector, setShowTimeRangeSelector] = useState(false);
@@ -227,10 +228,11 @@ function TopArtistsSection() {
           options={[
             { value: 'grid', label: 'Grid' },
             { value: 'list', label: 'List' },
+            { value: 'compact-grid', label: 'Compact Grid' },
           ]}
           onChange={setLayout}
         />
-        {layout === 'grid' && (
+        {layout !== 'list' && (
           <NumberInput label="columns" value={columns} min={2} max={5} onChange={setColumns} />
         )}
         <Toggle label="showGenres" value={showGenres} onChange={setShowGenres} />
@@ -253,13 +255,15 @@ function TopArtistsSection() {
 
 function RecentlyPlayedSection() {
   const [limit, setLimit] = useState(10);
-  const [layout, setLayout] = useState<'list' | 'timeline'>('list');
+  const [layout, setLayout] = useState<'list' | 'grid' | 'compact-grid'>('list');
+  const [columns, setColumns] = useState(3);
   const [showTimestamp, setShowTimestamp] = useState(true);
   const [groupByDay, setGroupByDay] = useState(false);
 
   const codeParts = ['<RecentlyPlayed'];
   if (limit !== 10) codeParts.push(`  limit={${limit}}`);
   if (layout !== 'list') codeParts.push(`  layout="${layout}"`);
+  if (layout !== 'list' && columns !== 3) codeParts.push(`  columns={${columns}}`);
   if (!showTimestamp) codeParts.push('  showTimestamp={false}');
   if (groupByDay) codeParts.push('  groupByDay');
   codeParts.push('/>');
@@ -274,10 +278,14 @@ function RecentlyPlayedSection() {
           value={layout}
           options={[
             { value: 'list', label: 'List' },
-            { value: 'timeline', label: 'Timeline' },
+            { value: 'grid', label: 'Grid' },
+            { value: 'compact-grid', label: 'Compact Grid' },
           ]}
           onChange={setLayout}
         />
+        {layout !== 'list' && (
+          <NumberInput label="columns" value={columns} min={2} max={5} onChange={setColumns} />
+        )}
         <Toggle label="showTimestamp" value={showTimestamp} onChange={setShowTimestamp} />
         <Toggle label="groupByDay" value={groupByDay} onChange={setGroupByDay} />
       </div>
@@ -285,6 +293,7 @@ function RecentlyPlayedSection() {
         <RecentlyPlayed
           limit={limit}
           layout={layout}
+          columns={columns}
           showTimestamp={showTimestamp}
           groupByDay={groupByDay}
         />

@@ -5,7 +5,7 @@ import type { TimeRange } from '@tastify/core';
 const TIME_RANGE_LABELS: Record<TimeRange, string> = {
   short_term: '4 weeks',
   medium_term: '6 months',
-  long_term: 'All time',
+  long_term: '1 year',
 };
 
 export interface TimeRangeSelectorProps {

@@ -33,12 +33,25 @@
   --tf-playback-toast-shadow: 0 0px 10px rgba(0, 0, 0, 0.04);
 }
 
+[data-tf-theme="dark"] {
+  --tf-color-bg: transparent;
+  --tf-color-surface: #333333;
+  --tf-color-text-primary: #f0f0f0;
+  --tf-color-text-on-accent: #111;
+  --tf-color-text-secondary: #999999;
+  --tf-color-accent: #92D5B3;
+  --tf-color-border: #444444;
+
+  --tf-playback-bar-bg: #2f3130;
+  --tf-playback-bar-text: #fff;
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  [data-tf-theme="auto"] {
     --tf-color-bg: transparent;
     --tf-color-surface: #333333;
     --tf-color-text-primary: #f0f0f0;
-    --tf-color-text-on-accent: #111;  
+    --tf-color-text-on-accent: #111;
     --tf-color-text-secondary: #999999;
     --tf-color-accent: #92D5B3;
     --tf-color-border: #444444;
@@ -443,6 +456,24 @@
   -webkit-line-clamp: 2;
 }
 
+/* ── TrackCard compact-grid (list-style items in grid container) ── */
+
+.tf-track-card--compact-grid {
+  display: grid;
+  padding: var(--tf-space-sm) var(--tf-space-md);
+  font-family: var(--tf-font-family);
+  color: var(--tf-color-text-primary);
+  border-radius: var(--tf-radius);
+  transition: background var(--tf-transition-speed);
+}
+
+.tf-track-card--compact-grid > .tf-card__skeleton,
+.tf-track-card--compact-grid > .tf-card__content {
+  display: flex;
+  align-items: center;
+  gap: var(--tf-space-md);
+}
+
 /* ── TimeRangeSelector (shared) ─────────────────── */
 
 .tf-time-range-selector {
@@ -496,6 +527,16 @@
 }
 
 .tf-top-tracks--grid .tf-top-tracks__list > * {
+  min-width: 0;
+}
+
+.tf-top-tracks--compact-grid .tf-top-tracks__list {
+  display: grid;
+  gap: var(--tf-grid-gap);
+  min-width: 0;
+}
+
+.tf-top-tracks--compact-grid .tf-top-tracks__list > * {
   min-width: 0;
 }
 
@@ -565,6 +606,28 @@
   gap: var(--tf-space-md);
 }
 
+.tf-artist-card--compact-grid {
+  display: grid;
+  padding: var(--tf-space-sm) var(--tf-space-md);
+  font-family: var(--tf-font-family);
+  color: var(--tf-color-text-primary);
+  border-radius: var(--tf-radius);
+  transition: background var(--tf-transition-speed);
+}
+
+.tf-artist-card--compact-grid > .tf-card__skeleton,
+.tf-artist-card--compact-grid > .tf-card__content {
+  display: flex;
+  align-items: center;
+  gap: var(--tf-space-md);
+}
+
+.tf-artist-card--compact-grid .tf-artist-card__photo {
+  width: var(--tf-art-size);
+  height: var(--tf-art-size);
+  border-radius: 50%;
+}
+
 .tf-artist-card__info {
   display: flex;
   flex-direction: column;
@@ -610,6 +673,16 @@
   min-width: 0;
 }
 
+.tf-top-artists--compact-grid .tf-top-artists__list {
+  display: grid;
+  gap: var(--tf-grid-gap);
+  min-width: 0;
+}
+
+.tf-top-artists--compact-grid .tf-top-artists__list > * {
+  min-width: 0;
+}
+
 /* ── RecentlyPlayed ─────────────────────────────── */
 
 .tf-recently-played {
@@ -640,31 +713,22 @@
   padding-bottom: var(--tf-space-xs);
 }
 
-.tf-recently-played--timeline .tf-recently-played__list {
-  border-left: 2px solid var(--tf-color-border);
-  padding-left: var(--tf-space-md);
-}
-
 .tf-recently-played__list {
   display: flex;
   flex-direction: column;
   gap: var(--tf-space-xs);
 }
 
-.tf-recently-played--timeline .tf-recently-played__list > .tf-track-card {
-  position: relative;
+.tf-recently-played--grid .tf-recently-played__list,
+.tf-recently-played--compact-grid .tf-recently-played__list {
+  display: grid;
+  gap: var(--tf-grid-gap);
+  min-width: 0;
 }
 
-.tf-recently-played--timeline .tf-recently-played__list > .tf-track-card::before {
-  content: '';
-  position: absolute;
-  left: calc(-1 * var(--tf-space-md) - 5px);
-  top: 50%;
-  transform: translateY(-50%);
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--tf-color-accent);
+.tf-recently-played--grid .tf-recently-played__list > *,
+.tf-recently-played--compact-grid .tf-recently-played__list > * {
+  min-width: 0;
 }
 
 /* ── Playable Cards ────────────────────────────────── */

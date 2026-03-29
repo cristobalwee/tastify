@@ -9,7 +9,7 @@ import { TimeRangeSelector } from './TimeRangeSelector.js';
 export interface TopArtistsProps {
   timeRange?: TimeRange;
   limit?: number;
-  layout?: 'grid' | 'list';
+  layout?: 'grid' | 'list' | 'compact-grid';
   columns?: number;
   showGenres?: boolean;
   header?: string | null;
@@ -62,7 +62,7 @@ export function TopArtists({
       <div
         className="tf-top-artists__list"
         style={
-          layout === 'grid'
+          layout !== 'list'
             ? { gridTemplateColumns: `repeat(${columns}, 1fr)` }
             : undefined
         }
