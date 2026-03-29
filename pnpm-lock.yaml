@@ -108,6 +108,22 @@ importers:
         specifier: ^6.0.0
         version: 6.4.1(@types/node@25.5.0)
 
+  examples/vanilla-showcase:
+    dependencies:
+      '@tastify/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+      '@tastify/vanilla':
+        specifier: workspace:*
+        version: link:../../packages/vanilla
+    devDependencies:
+      typescript:
+        specifier: ^5.9.0
+        version: 5.9.3
+      vite:
+        specifier: ^6.0.0
+        version: 6.4.1(@types/node@25.5.0)
+
   packages/cli:
     dependencies:
       open:
