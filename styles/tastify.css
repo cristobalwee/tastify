@@ -3,7 +3,7 @@
   --tf-color-surface: #ffffff;
   --tf-color-text-primary: #1a1a1a;
   --tf-color-text-on-accent: #fff;  
-  --tf-color-text-secondary: #888888;
+  --tf-color-text-secondary: #676767;
   --tf-color-accent: #45785E;
   --tf-color-border: #e0e0e0;
   --tf-font-family: inherit;
@@ -171,6 +171,7 @@
 .tf-waveform__bar {
   width: 3px;
   border-radius: 2px;
+  height: 45%;
   background: var(--tf-color-accent);
 }
 
@@ -355,6 +356,7 @@
 .tf-track-card--list {
   display: grid;
   padding: var(--tf-space-sm) var(--tf-space-md);
+  margin: 0 calc(var(--tf-space-md) * -1);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
   border-radius: var(--tf-radius);
@@ -454,14 +456,14 @@
   border: 1px solid var(--tf-color-border);
   border-radius: var(--tf-radius-action);
   background: transparent;
-  color: var(--tf-color-text-secondary);
+  color: var(--tf-color-text);
   font-size: var(--tf-font-size-sm);
   cursor: pointer;
   transition: all var(--tf-transition-speed);
 }
 
 .tf-time-range-selector__btn:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .tf-time-range-selector__btn--active {
@@ -643,6 +645,12 @@
   padding-left: var(--tf-space-md);
 }
 
+.tf-recently-played__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--tf-space-xs);
+}
+
 .tf-recently-played--timeline .tf-recently-played__list > .tf-track-card {
   position: relative;
 }
@@ -672,7 +680,7 @@
 
 .tf-track-card--playable:hover,
 .tf-artist-card--playable:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .tf-track-card--playable:active,
@@ -681,11 +689,7 @@
 }
 
 .tf-track-card--playing {
-  background: color-mix(in srgb, var(--tf-color-accent) 8%, transparent);
-}
-
-.tf-track-card--playing:hover {
-  background: color-mix(in srgb, var(--tf-color-accent) 12%, transparent);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .tf-track-card--playing .tf-track-card__name {
@@ -693,11 +697,7 @@
 }
 
 .tf-artist-card--playing {
-  background: color-mix(in srgb, var(--tf-color-accent) 8%, transparent);
-}
-
-.tf-artist-card--playing:hover {
-  background: color-mix(in srgb, var(--tf-color-accent) 12%, transparent);
+  background: rgba(0, 0, 0, 0.12);
 }
 
 .tf-artist-card--playing .tf-artist-card__name {
@@ -953,7 +953,6 @@
 .tf-playback-toast__info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
   flex: 1;
   min-width: 0;
 }

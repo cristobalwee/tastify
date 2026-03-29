@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import StickyHeader from '../components/StickyHeader.astro';
 import Hero from '../components/Hero.astro';
 import Showcase from '../components/Showcase';
 import Features from '../components/Features.astro';
@@ -10,6 +11,7 @@ import Footer from '../components/Footer.astro';
 ---
 
 <Layout>
+  <StickyHeader />
   <Hero />
   <Showcase client:load />
   <Features />
