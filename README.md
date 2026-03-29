@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/cristobalwee/tastify/main/.github/assets/hero.png" alt="tastify" width="720" />
+  <img width="530" height="296" alt="hero" src="https://github.com/user-attachments/assets/0d37ca58-ee19-4ec6-a688-3102adcda2e4" />
 </p>
-
-<h1 align="center">tastify</h1>
 
 <p align="center">
   Spotify listening widgets for developer portfolios.<br/>
