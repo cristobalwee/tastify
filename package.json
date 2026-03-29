@@ -10,7 +10,6 @@
     "test": "turbo run test",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
-    "showcase": "pnpm --filter @tastify/showcase exec vite",
     "vanilla": "pnpm --filter @tastify/vanilla-showcase exec vite",
     "landing": "pnpm --filter tastify-landing exec astro dev"
   },
