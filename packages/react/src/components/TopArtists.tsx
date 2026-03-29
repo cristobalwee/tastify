@@ -3,13 +3,8 @@
 import { useState, type ReactNode } from 'react';
 import type { TopArtistsData, TimeRange } from '@tastify/core';
 import { useTopArtists } from '../hooks/useTopArtists.js';
-import { ArtistCard, ArtistCardSkeleton } from './ArtistCard.js';
-
-const TIME_RANGE_LABELS: Record<TimeRange, string> = {
-  short_term: '4 weeks',
-  medium_term: '6 months',
-  long_term: 'All time',
-};
+import { ArtistCard } from './ArtistCard.js';
+import { TimeRangeSelector } from './TimeRangeSelector.js';
 
 export interface TopArtistsProps {
   timeRange?: TimeRange;
@@ -21,38 +16,6 @@ export interface TopArtistsProps {
   showTimeRangeSelector?: boolean;
   className?: string;
   children?: (data: TopArtistsData) => ReactNode;
-}
-
-function TopArtistsSkeleton({
-  layout = 'grid',
-  limit = 6,
-  columns = 3,
-  header,
-  className,
-}: {
-  layout?: 'grid' | 'list';
-  limit?: number;
-  columns?: number;
-  header?: string | null;
-  className?: string;
-}) {
-  return (
-    <div className={cls(`tf-top-artists tf-top-artists--${layout}`, className)}>
-      {header !== null && <h3 className="tf-top-artists__header">{header}</h3>}
-      <div
-        className="tf-top-artists__list"
-        style={
-          layout === 'grid'
-            ? { gridTemplateColumns: `repeat(${columns}, 1fr)` }
-            : undefined
-        }
-      >
-        {Array.from({ length: limit }, (_, i) => (
-          <ArtistCardSkeleton key={i} layout={layout} />
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export function TopArtists({
@@ -72,43 +35,29 @@ export function TopArtists({
   const timeRange = timeRangeProp ?? internalRange;
   const state = useTopArtists({ timeRange, limit });
 
-  if (state.status === 'loading' || state.status === 'idle') {
-    return (
-      <TopArtistsSkeleton
-        layout={layout}
-        limit={limit}
-        columns={columns}
-        header={header}
-        className={className}
-      />
-    );
-  }
+  const isLoading = state.status === 'loading' || state.status === 'idle';
 
   if (state.status === 'error') {
     return null;
   }
 
-  const { data } = state;
+  const artists = state.status === 'success' ? state.data.artists : [];
 
-  if (children) {
-    return <>{children(data)}</>;
+  if (!isLoading && children && state.status === 'success') {
+    return <>{children(state.data)}</>;
   }
+
+  const cardCount = isLoading ? limit : artists.length;
 
   return (
     <div className={cls(`tf-top-artists tf-top-artists--${layout}`, className)}>
       {header !== null && <h3 className="tf-top-artists__header">{header}</h3>}
       {showTimeRangeSelector && (
-        <div className="tf-top-artists__selector">
-          {(Object.keys(TIME_RANGE_LABELS) as TimeRange[]).map((range) => (
-            <button
-              key={range}
-              className={`tf-top-artists__selector-btn${timeRange === range ? ' tf-top-artists__selector-btn--active' : ''}`}
-              onClick={() => setInternalRange(range)}
-            >
-              {TIME_RANGE_LABELS[range]}
-            </button>
-          ))}
-        </div>
+        <TimeRangeSelector
+          value={timeRange}
+          onChange={setInternalRange}
+          isLoading={isLoading}
+        />
       )}
       <div
         className="tf-top-artists__list"
@@ -118,10 +67,10 @@ export function TopArtists({
             : undefined
         }
       >
-        {data.artists.map((artist) => (
+        {Array.from({ length: cardCount }, (_, i) => (
           <ArtistCard
-            key={artist.id}
-            artist={artist}
+            key={i}
+            artist={artists[i]}
             layout={layout}
             showGenres={showGenres}
           />

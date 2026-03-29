@@ -5,6 +5,7 @@ export {
   getAudioPlayer,
   getOrCreateSDKPlayer,
   getOrCreateEmbedPlayer,
+  preloadEmbedPlayer,
   resetAudioPlayer,
   type AudioPlayer,
   type PlaybackState,

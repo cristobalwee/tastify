@@ -9,6 +9,6 @@ export default defineConfig({
   splitting: false,
   external: ['react', 'react-dom'],
   onSuccess: async () => {
-    copyFileSync('src/styles/tastify.css', 'dist/styles.css');
+    copyFileSync('../../styles/tastify.css', 'dist/styles.css');
   },
 });

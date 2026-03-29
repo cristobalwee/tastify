@@ -3,13 +3,8 @@
 import { useState, type ReactNode } from 'react';
 import type { TopTracksData, TimeRange } from '@tastify/core';
 import { useTopTracks } from '../hooks/useTopTracks.js';
-import { TrackCard, TrackCardSkeleton } from './TrackCard.js';
-
-const TIME_RANGE_LABELS: Record<TimeRange, string> = {
-  short_term: '4 weeks',
-  medium_term: '6 months',
-  long_term: 'All time',
-};
+import { TrackCard } from './TrackCard.js';
+import { TimeRangeSelector } from './TimeRangeSelector.js';
 
 export interface TopTracksProps {
   timeRange?: TimeRange;
@@ -22,38 +17,6 @@ export interface TopTracksProps {
   showTimeRangeSelector?: boolean;
   className?: string;
   children?: (data: TopTracksData) => ReactNode;
-}
-
-function TopTracksSkeleton({
-  layout = 'list',
-  limit = 5,
-  columns = 3,
-  header,
-  className,
-}: {
-  layout?: 'list' | 'grid';
-  limit?: number;
-  columns?: number;
-  header?: string | null;
-  className?: string;
-}) {
-  return (
-    <div className={cls(`tf-top-tracks tf-top-tracks--${layout}`, className)}>
-      {header !== null && <h3 className="tf-top-tracks__header">{header}</h3>}
-      <div
-        className="tf-top-tracks__list"
-        style={
-          layout === 'grid'
-            ? { gridTemplateColumns: `repeat(${columns}, 1fr)` }
-            : undefined
-        }
-      >
-        {Array.from({ length: limit }, (_, i) => (
-          <TrackCardSkeleton key={i} layout={layout} />
-        ))}
-      </div>
-    </div>
-  );
 }
 
 export function TopTracks({
@@ -74,43 +37,29 @@ export function TopTracks({
   const timeRange = timeRangeProp ?? internalRange;
   const state = useTopTracks({ timeRange, limit });
 
-  if (state.status === 'loading' || state.status === 'idle') {
-    return (
-      <TopTracksSkeleton
-        layout={layout}
-        limit={limit}
-        columns={columns}
-        header={header}
-        className={className}
-      />
-    );
-  }
+  const isLoading = state.status === 'loading' || state.status === 'idle';
 
   if (state.status === 'error') {
     return null;
   }
 
-  const { data } = state;
+  const tracks = state.status === 'success' ? state.data.tracks : [];
 
-  if (children) {
-    return <>{children(data)}</>;
+  if (!isLoading && children && state.status === 'success') {
+    return <>{children(state.data)}</>;
   }
+
+  const cardCount = isLoading ? limit : tracks.length;
 
   return (
     <div className={cls(`tf-top-tracks tf-top-tracks--${layout}`, className)}>
       {header !== null && <h3 className="tf-top-tracks__header">{header}</h3>}
       {showTimeRangeSelector && (
-        <div className="tf-top-tracks__selector">
-          {(Object.keys(TIME_RANGE_LABELS) as TimeRange[]).map((range) => (
-            <button
-              key={range}
-              className={`tf-top-tracks__selector-btn${timeRange === range ? ' tf-top-tracks__selector-btn--active' : ''}`}
-              onClick={() => setInternalRange(range)}
-            >
-              {TIME_RANGE_LABELS[range]}
-            </button>
-          ))}
-        </div>
+        <TimeRangeSelector
+          value={timeRange}
+          onChange={setInternalRange}
+          isLoading={isLoading}
+        />
       )}
       <div
         className="tf-top-tracks__list"
@@ -120,11 +69,12 @@ export function TopTracks({
             : undefined
         }
       >
-        {data.tracks.map((track, i) => (
+        {Array.from({ length: cardCount }, (_, i) => (
           <TrackCard
-            key={track.id}
-            track={track}
+            key={i}
+            track={tracks[i]}
             rank={layout === 'list' && showRank ? i + 1 : undefined}
+            showRank={showRank}
             showArt={showArt}
             layout={layout}
           />

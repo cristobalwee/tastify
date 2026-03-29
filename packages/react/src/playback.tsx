@@ -12,6 +12,7 @@ import {
   getAudioPlayer,
   getOrCreateSDKPlayer,
   getOrCreateEmbedPlayer,
+  preloadEmbedPlayer,
   type AudioPlayer,
   type PlaybackState,
   type PlaybackMode,
@@ -87,7 +88,10 @@ export function PlaybackProvider({
   const [state, setState] = useState<PlaybackState>(IDLE_STATE);
   const [isReady, setIsReady] = useState(false);
 
-  // Initialize player
+  if (requestedMode === 'embed' || requestedMode === 'auto') {
+    preloadEmbedPlayer();
+  }
+
   useEffect(() => {
     let cancelled = false;
 

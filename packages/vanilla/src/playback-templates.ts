@@ -13,7 +13,6 @@ interface PlaybackControls {
   onTogglePlayPause: () => void;
   onNext: () => void;
   onPrevious: () => void;
-  onSeek: (fraction: number) => void;
   onClose: () => void;
 }
 
@@ -67,27 +66,22 @@ function closeIcon(size: number): HTMLElement {
   return svg as unknown as HTMLElement;
 }
 
-function makeProgressClickable(
-  progressEl: HTMLElement,
-  onSeek: (fraction: number) => void,
-): void {
-  progressEl.addEventListener('click', (e) => {
-    const rect = progressEl.getBoundingClientRect();
-    const fraction = (e.clientX - rect.left) / rect.width;
-    onSeek(fraction);
-  });
+function renderLoadingBar(isLoading: boolean): HTMLElement {
+  const indicator = h('div', { class: 'tf-loading-bar__indicator' });
+  const bar = h('div', {
+    class: `tf-loading-bar${!isLoading ? ' tf-loading-bar--hidden' : ''}`,
+  }, [indicator]);
+  return bar;
 }
 
 export function renderPlaybackBar(
   state: PlaybackState,
   controls: PlaybackControls,
+  isLoading?: boolean,
 ): HTMLElement {
-  const { currentTrack, isPlaying, progress } = state;
+  const { currentTrack, isPlaying } = state;
 
-  const progressBar = h('div', { class: 'tf-playback-bar__progress-bar' });
-  setStyles(progressBar, { width: `${progress * 100}%` });
-  const progressEl = h('div', { class: 'tf-playback-bar__progress' }, [progressBar]);
-  makeProgressClickable(progressEl, controls.onSeek);
+  const loadingBar = renderLoadingBar(isLoading ?? false);
 
   const trackChildren: (HTMLElement | Text)[] = [];
   const art = currentTrack?.album.images[0]?.url;
@@ -125,15 +119,16 @@ export function renderPlaybackBar(
     closeBtn,
   ]);
 
-  return h('div', { class: 'tf-playback-bar tf-playback-bar--visible' }, [progressEl, content]);
+  return h('div', { class: 'tf-playback-bar tf-playback-bar--visible' }, [loadingBar, content]);
 }
 
 export function renderPlaybackToast(
   state: PlaybackState,
   position: ToastPosition,
   controls: PlaybackControls,
+  isLoading?: boolean,
 ): HTMLElement {
-  const { currentTrack, isPlaying, progress } = state;
+  const { currentTrack, isPlaying } = state;
   const art = currentTrack?.album.images[0]?.url;
 
   const bodyChildren: (HTMLElement | Text)[] = [];
@@ -163,17 +158,14 @@ export function renderPlaybackToast(
   const nextBtn = h('button', { class: 'tf-playback-toast__btn tf-playback-toast__btn--next', 'aria-label': 'Next' }, [nextIcon()]);
   nextBtn.addEventListener('click', controls.onNext);
 
-  const progressBar = h('div', { class: 'tf-playback-toast__progress-bar' });
-  setStyles(progressBar, { width: `${progress * 100}%` });
-  const progressEl = h('div', { class: 'tf-playback-toast__progress' }, [progressBar]);
-  makeProgressClickable(progressEl, controls.onSeek);
+  const loadingBar = renderLoadingBar(isLoading ?? false);
 
   const toast = h('div', {
     class: `tf-playback-toast tf-playback-toast--${position} tf-playback-toast--visible`,
   }, [
     h('div', { class: 'tf-playback-toast__body' }, bodyChildren),
     h('div', { class: 'tf-playback-toast__controls' }, [prevBtn, playBtn, nextBtn]),
-    progressEl,
+    loadingBar,
   ]);
 
   return toast;

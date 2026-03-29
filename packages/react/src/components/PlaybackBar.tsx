@@ -4,12 +4,15 @@ import { useEffect, useRef, useState } from 'react';
 import { usePlayback } from '../playback.js';
 
 export function PlaybackBar() {
-  const { state, togglePlayPause, next, previous, seek, stop } = usePlayback();
+  const { state, togglePlayPause, next, previous, stop } = usePlayback();
   const [visible, setVisible] = useState(false);
   const [mounted, setMounted] = useState(false);
   const lastTrackRef = useRef(state.currentTrack);
+  const [isTrackLoading, setIsTrackLoading] = useState(false);
+  const prevTrackIdRef = useRef<string | null>(null);
+  const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fallbackTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Keep a reference to the last track so content doesn't flash empty during exit
   if (state.currentTrack) {
     lastTrackRef.current = state.currentTrack;
   }
@@ -25,6 +28,33 @@ export function PlaybackBar() {
     }
   }, [state.currentTrack]);
 
+  useEffect(() => {
+    const changed = state.currentTrack?.id !== prevTrackIdRef.current;
+    prevTrackIdRef.current = state.currentTrack?.id ?? null;
+    if (!changed || !state.currentTrack) return;
+
+    if (dismissTimerRef.current) { clearTimeout(dismissTimerRef.current); dismissTimerRef.current = null; }
+    if (fallbackTimerRef.current) { clearTimeout(fallbackTimerRef.current); fallbackTimerRef.current = null; }
+    setIsTrackLoading(true);
+    fallbackTimerRef.current = setTimeout(() => setIsTrackLoading(false), 8000);
+  }, [state.currentTrack]);
+
+  useEffect(() => {
+    if (!isTrackLoading || state.progress === 0 || dismissTimerRef.current) return;
+    if (fallbackTimerRef.current) { clearTimeout(fallbackTimerRef.current); fallbackTimerRef.current = null; }
+    dismissTimerRef.current = setTimeout(() => {
+      dismissTimerRef.current = null;
+      setIsTrackLoading(false);
+    }, 300);
+  }, [isTrackLoading, state.progress]);
+
+  useEffect(() => {
+    return () => {
+      if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
+      if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
+    };
+  }, []);
+
   function handleTransitionEnd() {
     if (!visible && !state.currentTrack) {
       setMounted(false);
@@ -35,26 +65,17 @@ export function PlaybackBar() {
   if (!mounted) return null;
 
   const displayTrack = state.currentTrack ?? lastTrackRef.current;
-  const { isPlaying, progress } = state;
+  const { isPlaying } = state;
   const art = displayTrack?.album.images[0]?.url;
   const artistNames = displayTrack?.artists.map((a) => a.name).join(', ') ?? '';
-
-  function handleProgressClick(e: React.MouseEvent<HTMLDivElement>) {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const fraction = (e.clientX - rect.left) / rect.width;
-    seek(fraction);
-  }
 
   return (
     <div
       className={`tf-playback-bar${visible ? ' tf-playback-bar--visible' : ''}`}
       onTransitionEnd={handleTransitionEnd}
     >
-      <div className="tf-playback-bar__progress" onClick={handleProgressClick}>
-        <div
-          className="tf-playback-bar__progress-bar"
-          style={{ width: `${progress * 100}%` }}
-        />
+      <div className={`tf-loading-bar${!isTrackLoading ? ' tf-loading-bar--hidden' : ''}`}>
+        <div className="tf-loading-bar__indicator" />
       </div>
       <div className="tf-playback-bar__content">
         <div className="tf-playback-bar__track">

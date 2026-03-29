@@ -3,17 +3,16 @@ import type { TimeRange } from '@tastify/core';
 import {
   renderNowPlaying,
   renderNowPlayingSkeleton,
-  renderTopTracks,
   renderTopTracksSkeleton,
-  renderTopArtists,
   renderTopArtistsSkeleton,
   renderRecentlyPlayed,
   renderRecentlyPlayedSkeleton,
+  renderTimeRangeSelector,
+  populateTrackCard,
+  populateArtistCard,
 } from './templates.js';
 import type {
   NowPlayingOptions,
-  TopTracksOptions,
-  TopArtistsOptions,
   RecentlyPlayedOptions,
 } from './templates.js';
 import { replaceChildren } from './renderer.js';
@@ -200,51 +199,87 @@ export function mount(
   function renderTopTracksWidget(): void {
     let currentRange: TimeRange = opts.timeRange ?? 'medium_term';
 
-    function fetchAndRender(): void {
+    function fetchAndUpdate(): void {
       client
         .getTopTracks({ timeRange: currentRange, limit: opts.limit })
         .then((data) => {
           if (destroyed) return;
-          const trackOpts: TopTracksOptions = {
-            ...opts,
-            timeRange: currentRange,
-            layout: (opts.layout as 'list' | 'grid') ?? 'list',
-          };
-          const el = renderTopTracks(data, trackOpts, (range) => {
-            currentRange = range;
-            fetchAndRender();
+
+          const layout = (opts.layout as 'list' | 'grid') ?? 'list';
+          const showRank = opts.showRank !== false;
+          const showArt = opts.showArt !== false;
+
+          if (opts.showTimeRangeSelector) {
+            const oldSelector = target!.querySelector('.tf-time-range-selector');
+            if (oldSelector) {
+              const newSelector = renderTimeRangeSelector(currentRange, (range) => {
+                currentRange = range;
+                renderSkeleton();
+                fetchAndUpdate();
+              });
+              oldSelector.replaceWith(newSelector);
+            }
+          }
+
+          const cards = Array.from(target!.querySelectorAll<HTMLElement>('.tf-track-card'));
+          data.tracks.forEach((track, i) => {
+            if (i < cards.length) {
+              populateTrackCard(cards[i]!, track, {
+                rank: layout === 'list' && showRank ? i + 1 : undefined,
+                showArt,
+                onPlay: opts.onTrackPlay,
+              });
+            }
           });
-          replaceChildren(target!, [el]);
+
+          for (let i = data.tracks.length; i < cards.length; i++) {
+            cards[i]!.remove();
+          }
         })
         .catch(() => {});
     }
 
-    fetchAndRender();
+    fetchAndUpdate();
   }
 
   function renderTopArtistsWidget(): void {
     let currentRange: TimeRange = opts.timeRange ?? 'medium_term';
 
-    function fetchAndRender(): void {
+    function fetchAndUpdate(): void {
       client
         .getTopArtists({ timeRange: currentRange, limit: opts.limit })
         .then((data) => {
           if (destroyed) return;
-          const artistOpts: TopArtistsOptions = {
-            ...opts,
-            timeRange: currentRange,
-            layout: (opts.layout as 'grid' | 'list') ?? 'grid',
-          };
-          const el = renderTopArtists(data, artistOpts, (range) => {
-            currentRange = range;
-            fetchAndRender();
+
+          const showGenres = opts.showGenres ?? false;
+
+          if (opts.showTimeRangeSelector) {
+            const oldSelector = target!.querySelector('.tf-time-range-selector');
+            if (oldSelector) {
+              const newSelector = renderTimeRangeSelector(currentRange, (range) => {
+                currentRange = range;
+                renderSkeleton();
+                fetchAndUpdate();
+              });
+              oldSelector.replaceWith(newSelector);
+            }
+          }
+
+          const cards = Array.from(target!.querySelectorAll<HTMLElement>('.tf-artist-card'));
+          data.artists.forEach((artist, i) => {
+            if (i < cards.length) {
+              populateArtistCard(cards[i]!, artist, showGenres, opts.onArtistPlay);
+            }
           });
-          replaceChildren(target!, [el]);
+
+          for (let i = data.artists.length; i < cards.length; i++) {
+            cards[i]!.remove();
+          }
         })
         .catch(() => {});
     }
 
-    fetchAndRender();
+    fetchAndUpdate();
   }
 
   function renderRecentlyPlayedWidget(): void {
@@ -256,7 +291,7 @@ export function mount(
           ...opts,
           layout: (opts.layout as 'timeline' | 'list') ?? 'list',
         };
-        const el = renderRecentlyPlayed(data, rpOpts);
+        const el = renderRecentlyPlayed(data, rpOpts, opts.onTrackPlay);
         replaceChildren(target!, [el]);
       })
       .catch(() => {});

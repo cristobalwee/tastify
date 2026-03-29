@@ -11,7 +11,7 @@ export default defineConfig([
     splitting: false,
     external: ['@tastify/core'],
     onSuccess: async () => {
-      copyFileSync('src/styles/tastify.css', 'dist/styles.css');
+      copyFileSync('../../styles/tastify.css', 'dist/styles.css');
     },
   },
   // IIFE build (core is bundled, includes auto-init)

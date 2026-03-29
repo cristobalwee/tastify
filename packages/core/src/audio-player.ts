@@ -743,6 +743,16 @@ export async function getOrCreateEmbedPlayer(): Promise<AudioPlayer> {
   return pendingAsync;
 }
 
+/**
+ * Eagerly starts loading the Spotify Embed API script and creating the
+ * hidden iframe controller so that the first `play()` call is faster.
+ * Safe to call multiple times — subsequent calls are no-ops.
+ */
+export function preloadEmbedPlayer(): void {
+  if (typeof window === 'undefined' || instance || pendingAsync) return;
+  getOrCreateEmbedPlayer().catch(() => {});
+}
+
 export function resetAudioPlayer(): void {
   if (instance) {
     instance.destroy();

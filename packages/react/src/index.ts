@@ -7,6 +7,7 @@ export { NowPlaying, type NowPlayingProps } from './components/NowPlaying.js';
 export { TopTracks, type TopTracksProps } from './components/TopTracks.js';
 export { TopArtists, type TopArtistsProps } from './components/TopArtists.js';
 export { RecentlyPlayed, type RecentlyPlayedProps } from './components/RecentlyPlayed.js';
+export { TimeRangeSelector, type TimeRangeSelectorProps } from './components/TimeRangeSelector.js';
 export {
   PlaybackProvider,
   usePlayback,

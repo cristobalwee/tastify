@@ -1,9 +1,9 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import type { RecentlyPlayedData } from '@tastify/core';
 import { useRecentlyPlayed } from '../hooks/useRecentlyPlayed.js';
-import { TrackCard, TrackCardSkeleton } from './TrackCard.js';
+import { TrackCard } from './TrackCard.js';
 
 export interface RecentlyPlayedProps {
   limit?: number;
@@ -39,31 +39,6 @@ function getDayKey(dateStr: string): string {
   });
 }
 
-function RecentlyPlayedSkeleton({
-  limit = 10,
-  layout = 'list',
-  header,
-  className,
-}: {
-  limit?: number;
-  layout?: 'timeline' | 'list';
-  header?: string | null;
-  className?: string;
-}) {
-  return (
-    <div className={cls(`tf-recently-played tf-recently-played--${layout}`, className)}>
-      {header !== null && <h3 className="tf-recently-played__header">{header}</h3>}
-      <div className="tf-recently-played__list">
-        {Array.from({ length: Math.min(limit, 5) }, (_, i) => (
-          <div key={i} className="tf-recently-played__item">
-            <TrackCardSkeleton layout="list" />
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export function RecentlyPlayed({
   limit = 10,
   layout = 'list',
@@ -75,32 +50,22 @@ export function RecentlyPlayed({
 }: RecentlyPlayedProps) {
   const state = useRecentlyPlayed({ limit });
 
-  if (state.status === 'loading' || state.status === 'idle') {
-    return (
-      <RecentlyPlayedSkeleton
-        limit={limit}
-        layout={layout}
-        header={header}
-        className={className}
-      />
-    );
-  }
+  const isLoading = state.status === 'loading' || state.status === 'idle';
 
   if (state.status === 'error') {
     return null;
   }
 
-  const { data } = state;
+  const items = state.status === 'success' ? state.data.tracks : [];
 
-  if (children) {
-    return <>{children(data)}</>;
+  if (!isLoading && children && state.status === 'success') {
+    return <>{children(state.data)}</>;
   }
 
-  const items = data.tracks;
+  const itemCount = isLoading ? limit : items.length;
 
-  // Group by day if requested
   let grouped: Map<string, typeof items> | null = null;
-  if (groupByDay) {
+  if (!isLoading && groupByDay) {
     grouped = new Map();
     for (const item of items) {
       const key = getDayKey(item.playedAt);
@@ -129,29 +94,29 @@ export function RecentlyPlayed({
               <h4 className="tf-recently-played__day">{day}</h4>
               <div className="tf-recently-played__list">
                 {dayItems.map((item, i) => (
-                  <div key={`${item.track.id}-${i}`} className="tf-recently-played__item">
-                    <TrackCard track={item.track} showArt layout="list" />
-                    {showTimestamp && (
-                      <span className="tf-recently-played__time">
-                        {formatRelativeTime(item.playedAt)}
-                      </span>
-                    )}
-                  </div>
+                  <TrackCard
+                    key={i}
+                    track={item.track}
+                    showArt
+                    layout="list"
+                    showTimestamp={showTimestamp}
+                    timestamp={formatRelativeTime(item.playedAt)}
+                  />
                 ))}
               </div>
             </div>
           ))
         : (
             <div className="tf-recently-played__list">
-              {items.map((item, i) => (
-                <div key={`${item.track.id}-${i}`} className="tf-recently-played__item">
-                  <TrackCard track={item.track} showArt layout="list" />
-                  {showTimestamp && (
-                    <span className="tf-recently-played__time">
-                      {formatRelativeTime(item.playedAt)}
-                    </span>
-                  )}
-                </div>
+              {Array.from({ length: itemCount }, (_, i) => (
+                <TrackCard
+                  key={i}
+                  track={items[i]?.track}
+                  showArt
+                  layout="list"
+                  showTimestamp={showTimestamp}
+                  timestamp={items[i]?.playedAt ? formatRelativeTime(items[i].playedAt) : undefined}
+                />
               ))}
             </div>
           )}

@@ -167,10 +167,10 @@ describe('renderTopTracks', () => {
 
   it('renders time range selector', () => {
     const el = renderTopTracks(data, { showTimeRangeSelector: true });
-    const buttons = el.querySelectorAll('.tf-top-tracks__selector-btn');
+    const buttons = el.querySelectorAll('.tf-time-range-selector__btn');
     expect(buttons.length).toBe(3);
     expect(
-      el.querySelector('.tf-top-tracks__selector-btn--active')!.textContent,
+      el.querySelector('.tf-time-range-selector__btn--active')!.textContent,
     ).toBe('6 months');
   });
 });
@@ -207,7 +207,7 @@ describe('renderTopArtists', () => {
   it('renders time range selector', () => {
     const el = renderTopArtists(data, { showTimeRangeSelector: true, timeRange: 'short_term' });
     expect(
-      el.querySelector('.tf-top-artists__selector-btn--active')!.textContent,
+      el.querySelector('.tf-time-range-selector__btn--active')!.textContent,
     ).toBe('4 weeks');
   });
 });
@@ -226,7 +226,7 @@ describe('renderRecentlyPlayed', () => {
     expect(el.classList.contains('tf-recently-played')).toBe(true);
     expect(el.classList.contains('tf-recently-played--list')).toBe(true);
     expect(el.querySelector('.tf-recently-played__header')!.textContent).toBe('Recently Played');
-    expect(el.querySelectorAll('.tf-recently-played__item').length).toBe(2);
+    expect(el.querySelectorAll('.tf-track-card').length).toBe(2);
   });
 
   it('renders timeline layout', () => {

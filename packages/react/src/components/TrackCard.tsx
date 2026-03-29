@@ -3,11 +3,15 @@ import type { TastifyTrack } from '@tastify/core';
 import { PlaybackContext } from '../playback.js';
 
 interface TrackCardProps {
-  track: TastifyTrack;
+  track?: TastifyTrack;
   rank?: number;
   showArt?: boolean;
+  showRank?: boolean;
   layout: 'list' | 'grid';
+  interactive?: boolean;
   onPlay?: (track: TastifyTrack) => void;
+  timestamp?: string;
+  showTimestamp?: boolean;
 }
 
 function Waveform({ paused }: { paused?: boolean }) {
@@ -21,37 +25,21 @@ function Waveform({ paused }: { paused?: boolean }) {
   );
 }
 
-export function TrackCardSkeleton({ layout }: { layout: 'list' | 'grid' }) {
-  if (layout === 'grid') {
-    return (
-      <div className="tf-track-card tf-track-card--grid">
-        <div className="tf-skeleton tf-skeleton--art-grid" />
-        <div className="tf-skeleton tf-skeleton--text" style={{ width: '80%' }} />
-        <div className="tf-skeleton tf-skeleton--text-sm" />
-      </div>
-    );
-  }
-  return (
-    <div className="tf-track-card tf-track-card--list">
-      <div className="tf-skeleton tf-skeleton--art" />
-      <div className="tf-track-card__info">
-        <div className="tf-skeleton tf-skeleton--text" style={{ width: '70%' }} />
-        <div className="tf-skeleton tf-skeleton--text-sm" />
-      </div>
-    </div>
-  );
+export function TrackCardSkeleton({ layout, showRank }: { layout: 'list' | 'grid'; showRank?: boolean }) {
+  return <TrackCard layout={layout} showRank={showRank} />;
 }
 
-export function TrackCard({ track, rank, showArt = true, layout, onPlay }: TrackCardProps) {
+export function TrackCard({ track, rank, showArt = true, showRank, layout, interactive = true, onPlay, timestamp, showTimestamp }: TrackCardProps) {
   const playback = useContext(PlaybackContext);
-  const art = track.album.images[0]?.url;
+  const loaded = !!track;
 
   const isFullPlayback = playback?.playbackMode === 'sdk' || playback?.playbackMode === 'embed';
-  const isPlayable = !!(onPlay || (playback && (isFullPlayback || track.previewUrl)));
-  const isPlaying = playback?.state.currentTrack?.id === track.id;
+  const isPlayable = loaded && interactive && !!(onPlay || (playback && (isFullPlayback || track.previewUrl)));
+  const isPlaying = loaded && playback?.state.currentTrack?.id === track.id;
   const isPaused = isPlaying && !playback?.state.isPlaying;
 
   function handleClick() {
+    if (!track) return;
     if (onPlay) {
       onPlay(track);
     } else if (playback) {
@@ -75,51 +63,81 @@ export function TrackCard({ track, rank, showArt = true, layout, onPlay }: Track
       }
     : {};
 
-  function cardCls(base: string): string {
-    const parts = [base];
-    if (isPlayable) parts.push('tf-track-card--playable');
-    if (isPlaying) parts.push('tf-track-card--playing');
-    return parts.join(' ');
-  }
+  const classes = [
+    'tf-track-card',
+    `tf-track-card--${layout}`,
+    loaded && 'tf-track-card--loaded',
+    isPlayable && 'tf-track-card--playable',
+    isPlaying && 'tf-track-card--playing',
+  ].filter(Boolean).join(' ');
+
+  const art = track?.album.images[0]?.url;
 
   if (layout === 'grid') {
     return (
-      <div className={cardCls('tf-track-card tf-track-card--grid')} {...interactiveProps}>
-        {showArt && art && (
-          <img
-            className="tf-track-card__art"
-            src={art}
-            alt={track.album.name}
-            loading="lazy"
-          />
-        )}
-        <span className="tf-track-card__name">{track.name}</span>
-        <span className="tf-track-card__artist">
-          {track.artists.map((a) => a.name).join(', ')}
-        </span>
-        {isPlaying && <Waveform paused={isPaused} />}
+      <div className={classes} {...interactiveProps}>
+        <div className="tf-card__skeleton" aria-hidden={loaded || undefined}>
+          <div className="tf-skeleton tf-skeleton--art-grid" />
+          <div className="tf-skeleton tf-skeleton--text" style={{ width: '80%' }} />
+          <div className="tf-skeleton tf-skeleton--text-sm" />
+        </div>
+        <div className="tf-card__content">
+          {track && (
+            <>
+              {showArt && art && (
+                <img
+                  className="tf-track-card__art"
+                  src={art}
+                  alt={track.album.name}
+                  loading="lazy"
+                />
+              )}
+              <span className="tf-track-card__name">{track.name}</span>
+              <span className="tf-track-card__artist">
+                {track.artists.map((a) => a.name).join(', ')}
+              </span>
+              {isPlaying && <Waveform paused={isPaused} />}
+            </>
+          )}
+        </div>
       </div>
     );
   }
 
   return (
-    <div className={cardCls('tf-track-card tf-track-card--list')} {...interactiveProps}>
-      {rank != null && !isPlaying && <span className="tf-track-card__rank">{rank}</span>}
-      {showArt && art && (
-        <img
-          className="tf-track-card__art"
-          src={art}
-          alt={track.album.name}
-          loading="lazy"
-        />
-      )}
-      <div className="tf-track-card__info">
-        <span className="tf-track-card__name">{track.name}</span>
-        <span className="tf-track-card__artist">
-          {track.artists.map((a) => a.name).join(', ')}
-        </span>
+    <div className={classes} {...interactiveProps}>
+      <div className="tf-card__skeleton" aria-hidden={loaded || undefined}>
+        {showRank && <div className="tf-skeleton tf-skeleton--rank" />}
+        <div className="tf-skeleton tf-skeleton--art" />
+        <div className="tf-track-card__info">
+          <div className="tf-skeleton tf-skeleton--text" style={{ width: '70%' }} />
+          <div className="tf-skeleton tf-skeleton--text-sm" />
+        </div>
+        {showTimestamp && <div className="tf-skeleton tf-skeleton--text-sm" style={{ width: '3em', flexShrink: 0 }} />}
       </div>
-      {isPlaying && <Waveform paused={isPaused} />}
+      <div className="tf-card__content">
+        {track && (
+          <>
+            {rank != null && <span className="tf-track-card__rank">{rank}</span>}
+            {showArt && art && (
+              <img
+                className="tf-track-card__art"
+                src={art}
+                alt={track.album.name}
+                loading="lazy"
+              />
+            )}
+            <div className="tf-track-card__info">
+              <span className="tf-track-card__name">{track.name}</span>
+              <span className="tf-track-card__artist">
+                {track.artists.map((a) => a.name).join(', ')}
+              </span>
+            </div>
+            {isPlaying && <Waveform paused={isPaused} />}
+            {timestamp && <span className="tf-recently-played__time">{timestamp}</span>}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -24,10 +24,9 @@ export default function Showcase() {
       <div className="showcase-annotation">
         <span className="showcase-annotation__label">
           Try playing a song
-          <svg viewBox="0 0 24 32" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2c0 8-6 12-6 18" />
-            <path d="M6 20l-4-3" />
-            <path d="M6 20l4-3" />
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M 16 8 C 32 16, 44 32, 44 52" />
+            <path d="M 32 42 L 44 52 L 52 40" />
           </svg>
         </span>
       </div>

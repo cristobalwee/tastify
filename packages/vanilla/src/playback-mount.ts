@@ -55,21 +55,34 @@ export function mountPlaybackBar(options?: PlaybackBarMountOptions): PlaybackWid
   let destroyed = false;
   let unsub1: (() => void) | null = null;
   let unsub2: (() => void) | null = null;
+  let lastTrackId: string | null = null;
+  let isTrackLoading = false;
 
   function render() {
     if (destroyed || !player) return;
     const state = player.getState();
     if (!state.currentTrack) {
       container.textContent = '';
+      lastTrackId = null;
+      isTrackLoading = false;
       return;
     }
+
+    // Track loading state
+    if (state.currentTrack.id !== lastTrackId) {
+      lastTrackId = state.currentTrack.id;
+      isTrackLoading = true;
+    }
+    if (state.progress > 0 && isTrackLoading) {
+      isTrackLoading = false;
+    }
+
     const el = renderPlaybackBar(state, {
       onTogglePlayPause: () => player!.togglePlayPause(),
       onNext: () => player!.next(),
       onPrevious: () => player!.previous(),
-      onSeek: (f) => player!.seek(f),
       onClose: () => player!.stop(),
-    });
+    }, isTrackLoading);
     replaceChildren(container, [el]);
   }
 
@@ -118,21 +131,34 @@ export function mountPlaybackToast(options?: PlaybackToastMountOptions): Playbac
   let destroyed = false;
   let unsub1: (() => void) | null = null;
   let unsub2: (() => void) | null = null;
+  let lastTrackId: string | null = null;
+  let isTrackLoading = false;
 
   function render() {
     if (destroyed || !player) return;
     const state = player.getState();
     if (!state.currentTrack) {
       container.textContent = '';
+      lastTrackId = null;
+      isTrackLoading = false;
       return;
     }
+
+    // Track loading state
+    if (state.currentTrack.id !== lastTrackId) {
+      lastTrackId = state.currentTrack.id;
+      isTrackLoading = true;
+    }
+    if (state.progress > 0 && isTrackLoading) {
+      isTrackLoading = false;
+    }
+
     const el = renderPlaybackToast(state, position, {
       onTogglePlayPause: () => player!.togglePlayPause(),
       onNext: () => player!.next(),
       onPrevious: () => player!.previous(),
-      onSeek: (f) => player!.seek(f),
       onClose: () => player!.stop(),
-    });
+    }, isTrackLoading);
     replaceChildren(container, [el]);
   }
 
