@@ -90,31 +90,26 @@ type Tab = (typeof tabs)[number];
 
 function NowPlayingSection() {
   const [showArt, setShowArt] = useState(true);
-  const [showProgress, setShowProgress] = useState(true);
   const [showLink, setShowLink] = useState(true);
   const [compact, setCompact] = useState(false);
+  const [contained, setContained] = useState(false);
 
-  const props = Object.entries({ showArt, showProgress, showLink, compact })
-    .filter(([, v]) => v !== true || ['compact'].includes(''))
-    .map(([k, v]) => (v === true ? k : v === false ? null : `${k}="${v}"`))
-    .filter(Boolean);
-
-  const code = `<NowPlaying${compact ? ' compact' : ''}${!showArt ? ' showArt={false}' : ''}${!showProgress ? ' showProgress={false}' : ''}${!showLink ? ' showLink={false}' : ''} />`;
+  const code = `<NowPlaying${compact ? ' compact' : ''}${contained ? ' contained' : ''}${!showArt ? ' showArt={false}' : ''}${!showLink ? ' showLink={false}' : ''} />`;
 
   return (
     <div className="pg-section">
       <div className="pg-controls">
         <Toggle label="showArt" value={showArt} onChange={setShowArt} />
-        <Toggle label="showProgress" value={showProgress} onChange={setShowProgress} />
         <Toggle label="showLink" value={showLink} onChange={setShowLink} />
         <Toggle label="compact" value={compact} onChange={setCompact} />
+        <Toggle label="contained" value={contained} onChange={setContained} />
       </div>
       <div className="pg-preview">
         <NowPlaying
           showArt={showArt}
-          showProgress={showProgress}
           showLink={showLink}
           compact={compact}
+          contained={contained}
           fallback={<p className="pg-fallback">Nothing playing right now — play something on Spotify!</p>}
         />
       </div>

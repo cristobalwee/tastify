@@ -1,8 +1,8 @@
-import { TastifyClient } from '@tastify/core';
+import { TastifyClient, nowPlayingFromRecentTrack } from '@tastify/core';
 import type { TimeRange } from '@tastify/core';
 import {
-  renderNowPlaying,
   renderNowPlayingSkeleton,
+  populateNowPlaying,
   renderTopTracksSkeleton,
   renderTopArtistsSkeleton,
   renderRecentlyPlayedSkeleton,
@@ -27,18 +27,21 @@ export interface MountOptions {
   theme?: TastifyTheme;
   // NowPlaying
   compact?: boolean;
+  contained?: boolean;
   showArt?: boolean;
-  showProgress?: boolean;
   showLink?: boolean;
+  showTitle?: boolean;
+  header?: string | null;
   fallback?: string;
   pollInterval?: number;
+  /** When true and nothing is live, show the most recent track with the same layout as playing. */
+  fallbackToRecent?: boolean;
   // TopTracks / TopArtists
   timeRange?: TimeRange;
   limit?: number;
   layout?: 'list' | 'grid' | 'compact-grid';
   showRank?: boolean;
   columns?: number;
-  header?: string | null;
   showTimeRangeSelector?: boolean;
   // TopArtists
   showGenres?: boolean;
@@ -161,51 +164,43 @@ export function mount(
   }
 
   function renderNowPlayingWidget(): void {
-    let lastData: import('@tastify/core').NowPlayingData | null = null;
-    let lastFetchedAt = 0;
+    const fallbackToRecent = opts.fallbackToRecent === true;
 
-    function animateProgress(): void {
-      if (destroyed || !lastData || !lastData.isPlaying) return;
-      if (opts.showProgress === false || opts.compact) return;
-
-      const elapsed = Date.now() - lastFetchedAt;
-      const interpolatedProgress = lastData.progressMs + elapsed;
-      const pct = Math.min(
-        (interpolatedProgress / lastData.track.durationMs) * 100,
-        100,
-      );
-
-      const bar = target!.querySelector<HTMLElement>('.tf-now-playing__progress-bar');
-      if (bar) {
-        bar.style.width = `${pct}%`;
+    async function resolveDisplay(
+      raw: import('@tastify/core').NowPlayingData | null,
+    ): Promise<import('@tastify/core').NowPlayingData | null> {
+      if (raw || !fallbackToRecent) return raw;
+      try {
+        const recent = await client.getRecentlyPlayed({ limit: 1 });
+        const first = recent.tracks[0];
+        return first ? nowPlayingFromRecentTrack(first.track) : null;
+      } catch {
+        return null;
       }
-
-      animationFrameId = requestAnimationFrame(animateProgress);
     }
 
     function renderWithData(data: import('@tastify/core').NowPlayingData | null): void {
       if (destroyed) return;
-      lastData = data;
-      lastFetchedAt = Date.now();
-
-      const el = renderNowPlaying(data, opts);
-      replaceChildren(target!, [el]);
-
-      if (animationFrameId != null) {
-        cancelAnimationFrame(animationFrameId);
+      const root = target!.querySelector<HTMLElement>('.tf-now-playing');
+      if (root) {
+        populateNowPlaying(root, data, opts);
       }
-      animateProgress();
     }
 
-    client.getNowPlaying().then(renderWithData).catch(() => {
-      if (!destroyed) {
-        replaceChildren(target!, [renderNowPlaying(null, opts)]);
-      }
-    });
+    client
+      .getNowPlaying()
+      .then(resolveDisplay)
+      .then(renderWithData)
+      .catch(() => {
+        if (!destroyed) {
+          const root = target!.querySelector<HTMLElement>('.tf-now-playing');
+          if (root) populateNowPlaying(root, null, opts);
+        }
+      });
 
     const interval = opts.pollInterval ?? 15_000;
-    stopPolling = client.onNowPlayingChange((data) => {
-      renderWithData(data);
+    stopPolling = client.onNowPlayingChange((raw) => {
+      void resolveDisplay(raw).then(renderWithData);
     }, interval);
   }
 

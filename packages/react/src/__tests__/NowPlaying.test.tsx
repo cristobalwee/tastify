@@ -26,7 +26,8 @@ const { getNowPlayingMock } = vi.hoisted(() => {
   return { getNowPlayingMock };
 });
 
-vi.mock('@tastify/core', () => {
+vi.mock('@tastify/core', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@tastify/core')>();
   const TastifyClient = vi.fn().mockImplementation(() => ({
     destroy: vi.fn(),
     getNowPlaying: getNowPlayingMock,
@@ -43,7 +44,12 @@ vi.mock('@tastify/core', () => {
       this.status = status;
     }
   };
-  return { TastifyClient, TastifyError };
+  return {
+    ...actual,
+    syncNowPlayingSkeletonWidths: vi.fn(),
+    TastifyClient,
+    TastifyError,
+  };
 });
 
 import { TastifyProvider } from '../provider.js';

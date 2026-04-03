@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  renderNowPlaying,
+  renderNowPlayingSkeleton,
+  populateNowPlaying,
   renderTopTracks,
   renderTopArtists,
   renderRecentlyPlayed,
@@ -57,18 +58,31 @@ function makeArtist(overrides?: Partial<TastifyArtist>): TastifyArtist {
   };
 }
 
+function buildNowPlaying(data: NowPlayingData | null, opts: Parameters<typeof renderNowPlayingSkeleton>[0] & { fallback?: string } = {}) {
+  const el = renderNowPlayingSkeleton(opts);
+  populateNowPlaying(el, data, opts);
+  return el;
+}
+
 describe('renderNowPlaying', () => {
+  it('renders skeleton with correct structure', () => {
+    const el = renderNowPlayingSkeleton({});
+    expect(el.classList.contains('tf-now-playing')).toBe(true);
+    expect(el.querySelector('.tf-now-playing__skeleton')).toBeTruthy();
+    expect(el.querySelector('.tf-now-playing__content')).toBeTruthy();
+    expect(el.querySelectorAll('.tf-skeleton').length).toBeGreaterThan(0);
+  });
+
   it('renders idle state with fallback when data is null', () => {
-    const el = renderNowPlaying(null, { fallback: '<p>Nothing playing</p>' });
+    const el = buildNowPlaying(null, { fallback: '<p>Nothing playing</p>' });
     expect(el.classList.contains('tf-now-playing')).toBe(true);
     expect(el.classList.contains('tf-now-playing--idle')).toBe(true);
     expect(el.innerHTML).toContain('Nothing playing');
   });
 
   it('renders empty idle state when data is null and no fallback', () => {
-    const el = renderNowPlaying(null, {});
+    const el = buildNowPlaying(null, {});
     expect(el.classList.contains('tf-now-playing--idle')).toBe(true);
-    expect(el.children.length).toBe(0);
   });
 
   it('renders playing state with correct BEM classes', () => {
@@ -78,31 +92,61 @@ describe('renderNowPlaying', () => {
       progressMs: 100_000,
       fetchedAt: Date.now(),
     };
-    const el = renderNowPlaying(data, {});
+    const el = buildNowPlaying(data, {});
 
+    expect(el.tagName).toBe('DIV');
     expect(el.classList.contains('tf-now-playing')).toBe(true);
+    expect(el.classList.contains('tf-now-playing--loaded')).toBe(true);
     expect(el.classList.contains('tf-now-playing--idle')).toBe(false);
+    expect(el.querySelector('.tf-now-playing__header')!.textContent).toBe('Listening to');
     expect(el.querySelector('.tf-now-playing__art')).toBeTruthy();
     expect(el.querySelector('.tf-now-playing__track')!.textContent).toBe('Test Track');
     expect(el.querySelector('.tf-now-playing__artist')!.textContent).toBe('Test Artist');
-    expect(el.querySelector('.tf-now-playing__progress')).toBeTruthy();
-    expect(el.querySelector('.tf-now-playing__progress-bar')).toBeTruthy();
-    expect(el.querySelector('.tf-now-playing__pulse')).toBeTruthy();
     expect(el.querySelector('.tf-now-playing__link')).toBeTruthy();
   });
 
-  it('renders compact mode', () => {
+  it('renders compact mode with link content layer', () => {
     const data: NowPlayingData = {
       isPlaying: true,
       track: makeTrack(),
       progressMs: 50_000,
       fetchedAt: Date.now(),
     };
-    const el = renderNowPlaying(data, { compact: true });
+    const el = buildNowPlaying(data, { compact: true });
 
+    const content = el.querySelector('.tf-now-playing__content')!;
+    expect(content.tagName).toBe('A');
+    expect(content.getAttribute('href')).toBe('https://open.spotify.com/track/t1');
     expect(el.classList.contains('tf-now-playing--compact')).toBe(true);
-    // Progress bar should not be shown in compact mode
-    expect(el.querySelector('.tf-now-playing__progress')).toBeNull();
+    expect(el.classList.contains('tf-now-playing--linked')).toBe(true);
+    expect(el.querySelector('.tf-now-playing__track')!.textContent).toBe('Test Track');
+  });
+
+  it('omits the section header when showTitle is false (default layout only)', () => {
+    const data: NowPlayingData = {
+      isPlaying: true,
+      track: makeTrack(),
+      progressMs: 100_000,
+      fetchedAt: Date.now(),
+    };
+    const el = buildNowPlaying(data, { showTitle: false });
+    expect(el.querySelector('.tf-now-playing__header')).toBeNull();
+    expect(el.querySelector('.tf-now-playing__track')).toBeTruthy();
+  });
+
+  it('renders compact mode with div content when showLink is false', () => {
+    const data: NowPlayingData = {
+      isPlaying: true,
+      track: makeTrack(),
+      progressMs: 50_000,
+      fetchedAt: Date.now(),
+    };
+    const el = buildNowPlaying(data, { compact: true, showLink: false });
+
+    expect(el.tagName).toBe('DIV');
+    expect(el.classList.contains('tf-now-playing--compact')).toBe(true);
+    const content = el.querySelector('.tf-now-playing__content')!;
+    expect(content.tagName).toBe('DIV');
   });
 
   it('hides art when showArt=false', () => {
@@ -112,7 +156,7 @@ describe('renderNowPlaying', () => {
       progressMs: 0,
       fetchedAt: Date.now(),
     };
-    const el = renderNowPlaying(data, { showArt: false });
+    const el = buildNowPlaying(data, { showArt: false });
     expect(el.querySelector('.tf-now-playing__art')).toBeNull();
   });
 
@@ -123,9 +167,27 @@ describe('renderNowPlaying', () => {
       progressMs: 0,
       fetchedAt: Date.now(),
     };
-    const el = renderNowPlaying(data, {});
+    const el = buildNowPlaying(data, {});
     expect(el.classList.contains('tf-now-playing--idle')).toBe(true);
-    expect(el.querySelector('.tf-now-playing__pulse')).toBeNull();
+  });
+
+  it('crossfades skeleton to content when populated', () => {
+    const el = renderNowPlayingSkeleton({});
+    const skeleton = el.querySelector('.tf-now-playing__skeleton')!;
+    expect(skeleton.getAttribute('aria-hidden')).toBeNull();
+    expect(el.classList.contains('tf-now-playing--loaded')).toBe(false);
+
+    const data: NowPlayingData = {
+      isPlaying: true,
+      track: makeTrack(),
+      progressMs: 0,
+      fetchedAt: Date.now(),
+    };
+    populateNowPlaying(el, data, {});
+
+    expect(el.classList.contains('tf-now-playing--loaded')).toBe(true);
+    expect(skeleton.getAttribute('aria-hidden')).toBe('true');
+    expect(el.querySelector('.tf-now-playing__skeleton')).toBe(skeleton);
   });
 });
 

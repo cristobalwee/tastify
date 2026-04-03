@@ -1,4 +1,4 @@
-export { TastifyProvider, type TastifyProviderProps, type TastifyTheme, useTastifyClient } from './provider.js';
+export { TastifyProvider, type TastifyProviderProps, type TastifyTheme, useTastifyClient, useTastifyTheme } from './provider.js';
 export { useNowPlaying } from './hooks/useNowPlaying.js';
 export { useTopTracks } from './hooks/useTopTracks.js';
 export { useTopArtists } from './hooks/useTopArtists.js';

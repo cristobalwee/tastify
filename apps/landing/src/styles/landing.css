@@ -141,7 +141,7 @@ img {
 
 .hero {
   text-align: center;
-  padding: 6rem 0 3rem;
+  padding: 6rem 0 4rem;
 }
 
 .hero__logo {
@@ -218,13 +218,17 @@ img {
 /* ── Showcase (interactive area) ──────────────── */
 
 .showcase-section {
-  padding: 2rem 1rem 5rem;
+  padding: 0 1rem 5rem;
+  position: relative;
+}
+
+.showcase-stack {
   position: relative;
 }
 
 .showcase-annotation {
   position: absolute;
-  top: 3rem;
+  top: 4rem;
   left: 0;
   right: 0;
   max-width: var(--landing-max-width);
@@ -245,6 +249,11 @@ img {
   transform: rotate(-15deg);
 }
 
+.showcase-annotation {
+  animation: annotation-blur-in 0.25s ease-out 0.6s both;
+  transform-origin: left top;
+}
+
 .showcase-annotation__label svg {
   width: 64px;
   height: 72px;
@@ -255,6 +264,19 @@ img {
   transform: rotate(24deg);
 }
 
+@keyframes annotation-blur-in {
+  from {
+    filter: blur(8px);
+    transform: scale(0.96) translateY(2px);
+    opacity: 0;
+  }
+  to {
+    filter: blur(0);
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
 @media (max-width: 1200px) {
   .showcase-annotation {
     display: none;
@@ -262,6 +284,8 @@ img {
 }
 
 .showcase-panels {
+  position: relative;
+  z-index: 2;
   max-width: var(--landing-max-width);
   margin: 0 auto;
   display: grid;
@@ -294,6 +318,21 @@ img {
   }
 }
 
+/* ── Live NowPlaying (above panels, normal flow) ───────────────────────────── */
+
+.showcase-now-playing {
+  display: flex;
+  justify-content: center;
+  max-width: var(--landing-max-width);
+  margin: 0 auto;
+}
+
+.showcase-now-playing__inner {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 1rem;
+}
+
 /* ── Features grid ────────────────────────────── */
 
 #features {
@@ -301,6 +340,7 @@ img {
   margin-top: -20rem;
   padding: 6rem 0;
   position: relative;
+  z-index: 2;
   border-top: solid 1px var(--landing-border);
 }
 

@@ -7,6 +7,7 @@ import type {
   TastifyArtist,
   TimeRange,
 } from '@tastify/core';
+import { syncNowPlayingSkeletonWidths } from '@tastify/core';
 import { h, setStyles } from './renderer.js';
 
 const TIME_RANGE_LABELS: Record<TimeRange, string> = {
@@ -17,9 +18,12 @@ const TIME_RANGE_LABELS: Record<TimeRange, string> = {
 
 export interface NowPlayingOptions {
   compact?: boolean;
+  contained?: boolean;
   showArt?: boolean;
-  showProgress?: boolean;
   showLink?: boolean;
+  /** When false, the default (non-compact) layout omits the section title `<h3>`. */
+  showTitle?: boolean;
+  header?: string | null;
   fallback?: string;
   pollInterval?: number;
 }
@@ -432,48 +436,121 @@ export function renderTimeRangeSelector(
 }
 
 export function renderNowPlayingSkeleton(opts: NowPlayingOptions): HTMLElement {
-  return h('div', { class: 'tf-now-playing tf-now-playing--loading' }, [
-    h('div', { class: 'tf-skeleton tf-skeleton--art' }),
-    h('div', { class: 'tf-now-playing__info' }, [
-      h('div', { class: 'tf-skeleton tf-skeleton--text', style: 'width:60%' }),
-      h('div', { class: 'tf-skeleton tf-skeleton--text-sm' }),
+  const classes = ['tf-now-playing'];
+  if (opts.compact) classes.push('tf-now-playing--compact');
+  if (opts.contained) classes.push('tf-now-playing--contained');
+
+  const header = opts.header ?? 'Listening to';
+  const showTitle = opts.showTitle !== false;
+  const showArt = opts.showArt !== false;
+  const showLink = opts.showLink !== false;
+  const compact = !!opts.compact;
+
+  const skeletonChildren: (HTMLElement | Text)[] = [];
+
+  if (showArt) {
+    skeletonChildren.push(h('div', { class: 'tf-skeleton tf-skeleton--art' }));
+  }
+
+  const infoSkChildren: HTMLElement[] = compact
+    ? [
+        h('div', {
+          class: 'tf-skeleton tf-skeleton--text tf-now-playing__sk-line',
+          'data-tf-sk': 'row',
+        }),
+      ]
+    : [
+        h('div', {
+          class: 'tf-skeleton tf-skeleton--text tf-now-playing__sk-line',
+          'data-tf-sk': 'track',
+        }),
+        h('div', {
+          class: 'tf-skeleton tf-skeleton--text-sm tf-now-playing__sk-line',
+          'data-tf-sk': 'artist',
+        }),
+      ];
+
+  skeletonChildren.push(h('div', { class: 'tf-now-playing__info' }, infoSkChildren));
+
+  if (!compact && showLink) {
+    skeletonChildren.push(
+      h('div', { class: 'tf-now-playing__link-placeholder' }, [
+        h('div', {
+          class: 'tf-skeleton tf-skeleton--text-sm tf-now-playing__sk-line',
+          'data-tf-sk': 'link',
+        }),
+      ]),
+    );
+  }
+
+  const rootChildren: (HTMLElement | Text)[] = [];
+
+  if (!compact && showTitle && header !== null) {
+    rootChildren.push(h('h3', { class: 'tf-now-playing__header' }, [header]));
+  }
+
+  rootChildren.push(
+    h('div', { class: 'tf-now-playing__body' }, [
+      h('div', { class: 'tf-now-playing__skeleton' }, skeletonChildren),
+      h('div', { class: 'tf-now-playing__content' }),
     ]),
-  ]);
+  );
+
+  return h(
+    'div',
+    {
+      class: classes.join(' '),
+      'aria-busy': 'true',
+      'aria-live': 'polite',
+    },
+    rootChildren,
+  );
 }
 
-export function renderNowPlaying(
+export function populateNowPlaying(
+  root: HTMLElement,
   data: NowPlayingData | null,
   opts: NowPlayingOptions,
-): HTMLElement {
+): void {
   const {
     compact = false,
     showArt = true,
-    showProgress = true,
     showLink = true,
     fallback,
   } = opts;
 
+  const skeleton = root.querySelector<HTMLElement>('.tf-now-playing__skeleton');
+
   if (!data) {
-    const el = h('div', { class: 'tf-now-playing tf-now-playing--idle' });
-    if (fallback) {
-      el.innerHTML = fallback;
+    root.classList.add('tf-now-playing--idle');
+    root.classList.remove('tf-now-playing--loaded', 'tf-now-playing--linked');
+    root.removeAttribute('aria-busy');
+    if (skeleton) skeleton.setAttribute('aria-hidden', 'true');
+    root.querySelectorAll<HTMLElement>('.tf-now-playing__sk-line').forEach((el) => {
+      el.style.width = '';
+    });
+    // Replace content with fallback if provided
+    const content = root.querySelector<HTMLElement>('.tf-now-playing__content');
+    if (content && fallback) {
+      content.innerHTML = fallback;
     }
-    return el;
+    return;
   }
 
-  const { track, isPlaying, progressMs } = data;
+  const { track, isPlaying } = data;
   const art = track.album.images[0]?.url;
-  const progressPct = track.durationMs > 0 ? (progressMs / track.durationMs) * 100 : 0;
   const artistNames = track.artists.map((a) => a.name).join(', ');
 
-  const classes = ['tf-now-playing'];
-  if (compact) classes.push('tf-now-playing--compact');
-  if (!isPlaying) classes.push('tf-now-playing--idle');
+  root.classList.add('tf-now-playing--loaded');
+  root.classList.toggle('tf-now-playing--idle', !isPlaying);
+  root.removeAttribute('aria-busy');
+  if (skeleton) skeleton.setAttribute('aria-hidden', 'true');
 
-  const children: (HTMLElement | Text)[] = [];
+  // Build content children
+  const contentChildren: (HTMLElement | Text)[] = [];
 
   if (showArt && art) {
-    children.push(
+    contentChildren.push(
       h('img', {
         class: 'tf-now-playing__art',
         src: art,
@@ -483,25 +560,15 @@ export function renderNowPlaying(
     );
   }
 
-  children.push(
+  contentChildren.push(
     h('div', { class: 'tf-now-playing__info' }, [
       h('span', { class: 'tf-now-playing__track' }, [track.name]),
       h('span', { class: 'tf-now-playing__artist' }, [artistNames]),
     ]),
   );
 
-  if (showProgress && !compact) {
-    const bar = h('div', { class: 'tf-now-playing__progress-bar' });
-    setStyles(bar, { width: `${progressPct}%` });
-    children.push(h('div', { class: 'tf-now-playing__progress' }, [bar]));
-  }
-
-  if (isPlaying) {
-    children.push(h('span', { class: 'tf-now-playing__pulse' }));
-  }
-
-  if (showLink) {
-    children.push(
+  if (!compact && showLink) {
+    contentChildren.push(
       h('a', {
         class: 'tf-now-playing__link',
         href: track.externalUrl,
@@ -511,7 +578,33 @@ export function renderNowPlaying(
     );
   }
 
-  return h('div', { class: classes.join(' ') }, children);
+  // Replace content layer
+  const body = root.querySelector<HTMLElement>('.tf-now-playing__body');
+  if (!body) return;
+  const oldContent = body.querySelector<HTMLElement>('.tf-now-playing__content');
+  if (oldContent) oldContent.remove();
+
+  if (compact && showLink) {
+    root.classList.add('tf-now-playing--linked');
+    const contentEl = h(
+      'a',
+      {
+        class: 'tf-now-playing__content',
+        href: track.externalUrl,
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        'aria-label': `Open ${track.name} by ${artistNames} in Spotify`,
+      },
+      contentChildren,
+    );
+    body.appendChild(contentEl);
+  } else {
+    root.classList.remove('tf-now-playing--linked');
+    body.appendChild(h('div', { class: 'tf-now-playing__content' }, contentChildren));
+  }
+
+  syncNowPlayingSkeletonWidths(root);
+  requestAnimationFrame(() => syncNowPlayingSkeletonWidths(root));
 }
 
 export function renderTopTracksSkeleton(opts: TopTracksOptions): HTMLElement {

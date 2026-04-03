@@ -22,6 +22,7 @@ export interface TastifyProviderProps {
 }
 
 const TastifyContext = createContext<TastifyClient | null>(null);
+const TastifyThemeContext = createContext<TastifyTheme | undefined>(undefined);
 
 function buildConfig(props: Omit<TastifyProviderProps, 'children'>): TastifyConfig {
   const config: TastifyConfig = { cacheTTL: props.cacheTTL };
@@ -63,13 +64,15 @@ export function TastifyProvider({
 
   return (
     <TastifyContext.Provider value={client}>
-      {themeAttr ? (
-        <div data-tf-theme={themeAttr} style={{ display: 'contents' }}>
-          {children}
-        </div>
-      ) : (
-        children
-      )}
+      <TastifyThemeContext.Provider value={theme}>
+        {themeAttr ? (
+          <div data-tf-theme={themeAttr} style={{ display: 'contents' }}>
+            {children}
+          </div>
+        ) : (
+          children
+        )}
+      </TastifyThemeContext.Provider>
     </TastifyContext.Provider>
   );
 }
@@ -82,4 +85,8 @@ export function useTastifyClient(): TastifyClient {
     );
   }
   return client;
+}
+
+export function useTastifyTheme(): TastifyTheme | undefined {
+  return useContext(TastifyThemeContext);
 }

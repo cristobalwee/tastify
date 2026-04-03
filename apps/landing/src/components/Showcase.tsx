@@ -4,6 +4,7 @@ import {
   PlaybackOverlay,
   RecentlyPlayed,
   TopArtists,
+  NowPlaying,
 } from '@tastify/react';
 
 export default function Showcase() {
@@ -33,17 +34,29 @@ export default function Showcase() {
 
       <TastifyProvider tokenUrl={tokenUrl} theme="auto">
         <PlaybackProvider ui="toast" toastPosition="bottom-right" playbackMode="embed">
-          <div className="showcase-panels">
-            <div className="showcase-panel">
-              <RecentlyPlayed limit={8} />
+          <div className="showcase-stack">
+            <div className="showcase-now-playing">
+              <div className="showcase-now-playing__inner">
+                <NowPlaying
+                  pollInterval={15_000}
+                  fallbackToRecent
+                  compact
+                  contained
+                />
+              </div>
             </div>
-            <div className="showcase-sub-panel">
-              <TopArtists
-                limit={9}
-                layout="grid"
-                columns={3}
-                showTimeRangeSelector
-              />
+            <div className="showcase-panels">
+              <div className="showcase-panel">
+                <RecentlyPlayed limit={8} />
+              </div>
+              <div className="showcase-sub-panel">
+                <TopArtists
+                  limit={9}
+                  layout="grid"
+                  columns={3}
+                  showTimeRangeSelector
+                />
+              </div>
             </div>
           </div>
           <PlaybackOverlay />

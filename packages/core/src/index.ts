@@ -15,6 +15,7 @@ export {
 } from './audio-player.js';
 export { loadSpotifySDK } from './sdk-loader.js';
 export { loadSpotifyEmbed } from './embed-loader.js';
+export { nowPlayingFromRecentTrack, syncNowPlayingSkeletonWidths } from './now-playing-utils.js';
 export {
   TastifyError,
   type TastifyImage,

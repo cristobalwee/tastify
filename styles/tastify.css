@@ -1,6 +1,6 @@
 :root {
   --tf-color-bg: transparent;
-  --tf-color-surface: #ffffff;
+  --tf-color-surface: #F5F8F6;
   --tf-color-text-primary: #1a1a1a;
   --tf-color-text-on-accent: #fff;  
   --tf-color-text-secondary: #676767;
@@ -35,7 +35,7 @@
 
 [data-tf-theme="dark"] {
   --tf-color-bg: transparent;
-  --tf-color-surface: #333333;
+  --tf-color-surface: #2f3130;
   --tf-color-text-primary: #f0f0f0;
   --tf-color-text-on-accent: #111;
   --tf-color-text-secondary: #999999;
@@ -49,7 +49,7 @@
 @media (prefers-color-scheme: dark) {
   [data-tf-theme="auto"] {
     --tf-color-bg: transparent;
-    --tf-color-surface: #333333;
+    --tf-color-surface: #2f3130;
     --tf-color-text-primary: #f0f0f0;
     --tf-color-text-on-accent: #111;
     --tf-color-text-secondary: #999999;
@@ -85,14 +85,14 @@
 }
 
 .tf-skeleton--text {
-  height: 0.875em;
+  height: 1em;
   border-radius: 4px;
 }
 
 .tf-skeleton--text-sm {
   height: 0.75em;
   border-radius: 4px;
-  width: 60%;
+  width: 40%;
 }
 
 .tf-skeleton--art {
@@ -264,35 +264,147 @@
 
 /* ── NowPlaying ─────────────────────────────────── */
 
+@keyframes tf-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .tf-now-playing {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
+  flex-direction: column;
   gap: var(--tf-space-sm);
-  padding: var(--tf-space-md);
-  background: var(--tf-color-surface);
-  border-radius: var(--tf-radius);
   font-family: var(--tf-font-family);
   color: var(--tf-color-text-primary);
   transition: opacity var(--tf-transition-speed);
+}
+
+.tf-now-playing__header {
+  font-size: var(--tf-font-size-lg);
+  font-weight: var(--tf-font-weight-bold);
+  margin: 0 0 var(--tf-space-xs);
+}
+
+.tf-now-playing__body {
+  position: relative;
+  display: grid;
+}
+
+.tf-now-playing__skeleton,
+.tf-now-playing__content {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  gap: var(--tf-space-sm);
+  min-width: 0;
+  transition: opacity 350ms ease, visibility 350ms;
+}
+
+/* Only one layer participates in sizing: skeleton while loading, content once loaded. */
+.tf-now-playing:not(.tf-now-playing--loaded) > .tf-now-playing__body > .tf-now-playing__content {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.tf-now-playing--loaded > .tf-now-playing__body > .tf-now-playing__skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  max-width: 10em;
+}
+
+.tf-now-playing--loaded > .tf-now-playing__body > .tf-now-playing__content {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  visibility: visible;
+}
+
+a.tf-now-playing__content {
+  text-decoration: none;
+  color: inherit;
+}
+
+.tf-now-playing__label {
+  font-size: var(--tf-font-size-sm);
+  color: var(--tf-color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.tf-now-playing--contained {
+  padding: var(--tf-space-md) var(--tf-space-lg) var(--tf-space-md) var(--tf-space-md);
+  background: var(--tf-color-surface);
+  border-radius: var(--tf-radius);
 }
 
 .tf-now-playing--idle {
   opacity: 0.6;
 }
 
-.tf-now-playing--loading {
-  padding: var(--tf-space-md);
-  background: var(--tf-color-surface);
-  border-radius: var(--tf-radius);
-}
-
 .tf-now-playing__art {
   width: var(--tf-art-size);
   height: var(--tf-art-size);
-  border-radius: var(--tf-art-radius);
+  border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
+  animation: tf-spin 4s linear infinite;
+  -webkit-mask-image: radial-gradient(circle, transparent 10%, black 11%);
+  mask-image: radial-gradient(circle, transparent 10%, black 11%);
+  border: 1px solid var(--tf-color-border);
+  filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.04));
+}
+
+.tf-now-playing--idle .tf-now-playing__art {
+  animation-play-state: paused;
+}
+
+.tf-now-playing .tf-skeleton--art {
+  border-radius: 50%;
+}
+
+.tf-now-playing__skeleton .tf-skeleton {
+  display: block;
+}
+
+/*
+ * Loading: fixed placeholder widths size the row (skeleton is in-flow).
+ * Loaded: these selectors no longer match; syncNowPlayingSkeletonWidths sets px widths on the
+ * overlay skeleton so bars match the real track line without widening the widget.
+ */
+.tf-now-playing__sk-line {
+  max-width: 100%;
+}
+
+.tf-now-playing__skeleton .tf-now-playing__sk-line {
+  transition: width 260ms cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tf-now-playing__skeleton .tf-now-playing__sk-line {
+    transition: none;
+  }
+}
+
+.tf-now-playing:not(.tf-now-playing--loaded) .tf-now-playing__sk-line[data-tf-sk='track'] {
+  width: 10em;
+}
+
+.tf-now-playing:not(.tf-now-playing--loaded) .tf-now-playing__sk-line[data-tf-sk='artist'] {
+  width: 7em;
+}
+
+.tf-now-playing:not(.tf-now-playing--loaded) .tf-now-playing__sk-line[data-tf-sk='link'] {
+  width: 7.25rem;
+}
+
+.tf-now-playing:not(.tf-now-playing--loaded) .tf-now-playing__sk-line[data-tf-sk='row'] {
+  width: 14em;
 }
 
 .tf-now-playing__info {
@@ -301,12 +413,6 @@
   gap: var(--tf-space-xs);
   flex: 1;
   min-width: 0;
-}
-
-.tf-now-playing--compact .tf-now-playing__info {
-  flex-direction: row;
-  gap: var(--tf-space-sm);
-  align-items: baseline;
 }
 
 .tf-now-playing__track {
@@ -325,43 +431,85 @@
   text-overflow: ellipsis;
 }
 
-.tf-now-playing__progress {
-  width: 100%;
-  height: 3px;
-  background: var(--tf-color-border);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.tf-now-playing__progress-bar {
-  height: 100%;
-  background: var(--tf-color-accent);
-  border-radius: 2px;
-  transition: width var(--tf-transition-speed) linear;
-}
-
-.tf-now-playing__pulse {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--tf-pulse-color);
-  animation: tf-pulse 1.5s ease-in-out infinite;
-  flex-shrink: 0;
-}
-
-@keyframes tf-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
 .tf-now-playing__link {
   font-size: var(--tf-font-size-sm);
   color: var(--tf-color-accent);
   text-decoration: none;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .tf-now-playing__link:hover {
   text-decoration: underline;
+}
+
+/* Matches .tf-now-playing__link flex slot while loading (no layout shift) */
+.tf-now-playing__link-placeholder {
+  flex-shrink: 0;
+  margin-left: auto;
+  align-self: center;
+}
+
+/* ── NowPlaying – compact ── */
+
+.tf-now-playing--compact {
+  width: fit-content;
+}
+
+.tf-now-playing--compact.tf-now-playing--linked {
+  cursor: pointer;
+  transition:
+    background var(--tf-transition-speed),
+    box-shadow var(--tf-transition-speed),
+    transform var(--tf-transition-speed);
+}
+
+.tf-now-playing--compact.tf-now-playing--linked:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.tf-now-playing--compact.tf-now-playing--linked:active {
+  transform: scale(0.99);
+}
+
+.tf-now-playing--compact.tf-now-playing--linked:focus-within {
+  outline: 2px solid var(--tf-color-accent);
+  outline-offset: 2px;
+}
+
+.tf-now-playing--compact .tf-now-playing__art {
+  width: 32px;
+  height: 26px;
+}
+
+.tf-now-playing--compact .tf-skeleton--art {
+  width: 32px;
+  height: 32px;
+}
+
+.tf-now-playing--compact .tf-now-playing__info {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 0;
+}
+
+.tf-now-playing--compact .tf-now-playing__track {
+  font-size: var(--tf-font-size-sm);
+}
+
+.tf-now-playing--compact .tf-now-playing__artist {
+  font-size: var(--tf-font-size-sm);
+}
+
+.tf-now-playing--compact .tf-now-playing__artist::before {
+  content: '\00b7';
+  margin: 0 var(--tf-space-xs);
+}
+
+.tf-now-playing--compact.tf-now-playing--contained {
+  padding: var(--tf-space-xs) var(--tf-space-lg) var(--tf-space-xs) var(--tf-space-xs);
+  border-radius: 999px;
 }
 
 /* ── TrackCard ──────────────────────────────────── */
@@ -498,13 +646,7 @@
 }
 
 .tf-time-range-selector__btn--active {
-  background: var(--tf-color-accent);
-  color: var(--tf-color-text-on-accent);
   border-color: var(--tf-color-accent);
-}
-
-.tf-time-range-selector__btn--active:hover {
-  background: var(--tf-color-accent);
 }
 
 /* ── TopTracks ──────────────────────────────────── */
