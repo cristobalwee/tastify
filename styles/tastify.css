@@ -498,6 +498,7 @@
 .tf-now-playing--compact.tf-now-playing--contained {
   padding: var(--tf-space-xs) var(--tf-space-lg) var(--tf-space-xs) var(--tf-space-xs);
   border-radius: 999px;
+  overflow: hidden;
 }
 
 .tf-now-playing--compact.tf-now-playing--contained.tf-now-playing--playable {

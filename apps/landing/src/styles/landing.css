@@ -45,6 +45,9 @@ html {
     --landing-accent-hover: #50A17B;
     --landing-border: #e0e0e0;
     --landing-code-bg: #E3E8E5;
+
+    /* Override Tastify CSS custom properties */
+    --tf-color-surface: #ffffff;
   }
 }
 
