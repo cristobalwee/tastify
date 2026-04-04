@@ -63,7 +63,7 @@ widget.destroy()
 | `compact` | `boolean` | `false` | NowPlaying |
 | `showArt` | `boolean` | `true` | NowPlaying, TopTracks |
 | `showProgress` | `boolean` | `true` | NowPlaying |
-| `showLink` | `boolean` | `true` | NowPlaying |
+| `interactive` | `boolean` | `true` | NowPlaying |
 | `fallback` | `string` | — | NowPlaying |
 | `pollInterval` | `number` | `15000` | NowPlaying |
 | `timeRange` | `'short_term' \| 'medium_term' \| 'long_term'` | `'medium_term'` | TopTracks, TopArtists |
@@ -76,7 +76,7 @@ widget.destroy()
 | `showGenres` | `boolean` | `false` | TopArtists |
 | `showTimestamp` | `boolean` | `true` | RecentlyPlayed |
 | `groupByDay` | `boolean` | `false` | RecentlyPlayed |
-| `onTrackPlay` | `(track) => void` | — | TopTracks, RecentlyPlayed |
+| `onTrackPlay` | `(track) => void` | — | NowPlaying (optional; default uses embed player), TopTracks, RecentlyPlayed |
 | `onArtistPlay` | `(artist) => void` | — | TopArtists |
 
 ### MountedWidget

@@ -91,9 +91,25 @@ vi.mock('@tastify/core', () => {
     }
   }
 
+  const mockPlayer = {
+    getState: () => ({
+      currentTrack: null as null,
+      isPlaying: false,
+    }),
+    subscribe: vi.fn(() => vi.fn()),
+    play: vi.fn(),
+  };
+
   return {
     TastifyClient,
     _clients: clients,
+    nowPlayingFromRecentTrack: vi.fn((track: unknown) => ({
+      isPlaying: true,
+      track,
+      progressMs: 0,
+      fetchedAt: Date.now(),
+    })),
+    getOrCreateEmbedPlayer: vi.fn(() => Promise.resolve(mockPlayer)),
   };
 });
 

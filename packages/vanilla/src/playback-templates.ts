@@ -79,7 +79,7 @@ export function renderPlaybackBar(
   controls: PlaybackControls,
   isLoading?: boolean,
 ): HTMLElement {
-  const { currentTrack, isPlaying } = state;
+  const { currentTrack, isPlaying, previewEnded } = state;
 
   const loadingBar = renderLoadingBar(isLoading ?? false);
 
@@ -90,13 +90,20 @@ export function renderPlaybackBar(
       h('img', { class: 'tf-playback-bar__art', src: art, alt: currentTrack?.album.name ?? '', loading: 'lazy' }),
     );
   }
-  trackChildren.push(
-    h('div', { class: 'tf-playback-bar__info' }, [
-      h('span', { class: 'tf-playback-bar__name' }, [currentTrack?.name ?? '']),
-      h('span', { class: 'tf-playback-bar__artist' }, [
-        currentTrack?.artists.map((a) => a.name).join(', ') ?? '',
-      ]),
+
+  const infoChildren: (HTMLElement | Text)[] = [
+    h('span', { class: 'tf-playback-bar__name' }, [currentTrack?.name ?? '']),
+    h('span', { class: 'tf-playback-bar__artist' }, [
+      currentTrack?.artists.map((a) => a.name).join(', ') ?? '',
     ]),
+  ];
+  if (previewEnded) {
+    infoChildren.push(
+      h('span', { class: 'tf-playback-bar__preview-ended' }, ['Preview ended']),
+    );
+  }
+  trackChildren.push(
+    h('div', { class: 'tf-playback-bar__info' }, infoChildren),
   );
 
   const prevBtn = h('button', { class: 'tf-playback-bar__btn tf-playback-bar__btn--prev', 'aria-label': 'Previous' }, [prevIcon()]);
@@ -128,7 +135,7 @@ export function renderPlaybackToast(
   controls: PlaybackControls,
   isLoading?: boolean,
 ): HTMLElement {
-  const { currentTrack, isPlaying } = state;
+  const { currentTrack, isPlaying, previewEnded } = state;
   const art = currentTrack?.album.images[0]?.url;
 
   const bodyChildren: (HTMLElement | Text)[] = [];
@@ -137,13 +144,20 @@ export function renderPlaybackToast(
       h('img', { class: 'tf-playback-toast__art', src: art, alt: currentTrack?.album.name ?? '', loading: 'lazy' }),
     );
   }
-  bodyChildren.push(
-    h('div', { class: 'tf-playback-toast__info' }, [
-      h('span', { class: 'tf-playback-toast__name' }, [currentTrack?.name ?? '']),
-      h('span', { class: 'tf-playback-toast__artist' }, [
-        currentTrack?.artists.map((a) => a.name).join(', ') ?? '',
-      ]),
+
+  const infoChildren: (HTMLElement | Text)[] = [
+    h('span', { class: 'tf-playback-toast__name' }, [currentTrack?.name ?? '']),
+    h('span', { class: 'tf-playback-toast__artist' }, [
+      currentTrack?.artists.map((a) => a.name).join(', ') ?? '',
     ]),
+  ];
+  if (previewEnded) {
+    infoChildren.push(
+      h('span', { class: 'tf-playback-toast__preview-ended' }, ['Preview ended']),
+    );
+  }
+  bodyChildren.push(
+    h('div', { class: 'tf-playback-toast__info' }, infoChildren),
   );
   const closeBtn = h('button', { class: 'tf-playback-toast__btn tf-playback-toast__btn--close', 'aria-label': 'Close' }, [closeIcon(14)]);
   closeBtn.addEventListener('click', controls.onClose);

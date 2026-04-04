@@ -1,18 +1,21 @@
 'use client';
 
-import type { ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useRef } from 'react';
-import { syncNowPlayingSkeletonWidths, type NowPlayingData } from '@tastify/core';
+import type { KeyboardEvent, ReactNode } from 'react';
+import { useCallback, useContext, useEffect, useRef } from 'react';
+import type { NowPlayingData, TastifyTrack } from '@tastify/core';
+import { syncNowPlayingSkeletonWidths } from '@tastify/core';
+import { useIsomorphicLayoutEffect } from '../hooks/useIsomorphicLayoutEffect.js';
 import { useNowPlaying } from '../hooks/useNowPlaying.js';
+import { PlaybackContext } from '../playback.js';
+import { Waveform } from './Waveform.js';
 
 export interface NowPlayingProps {
   pollInterval?: number;
   showArt?: boolean;
-  showLink?: boolean;
+  /** When false, the widget is not clickable and does not start playback. Default true. */
+  interactive?: boolean;
   compact?: boolean;
   contained?: boolean;
-  /** When false, the default (non-compact) layout omits the section title `<h3>`. */
-  showTitle?: boolean;
   /**
    * When true and nothing is live, show the most recent track with the same layout as a playing item.
    * When false, `null` from the API yields the empty idle state (and `fallback` if provided).
@@ -22,21 +25,24 @@ export interface NowPlayingProps {
   fallback?: ReactNode;
   className?: string;
   children?: (data: NowPlayingData) => ReactNode;
+  /** If set, called instead of the playback context's `play` when the widget is clicked. */
+  onPlay?: (track: TastifyTrack) => void;
 }
 
 export function NowPlaying({
   pollInterval = 15_000,
   showArt = true,
-  showLink = true,
+  interactive = true,
   compact = false,
   contained = false,
-  showTitle = true,
   fallbackToRecent = false,
   header = 'Listening to',
   fallback,
   className,
   children,
+  onPlay,
 }: NowPlayingProps) {
+  const playback = useContext(PlaybackContext);
   const state = useNowPlaying({ pollInterval, fallbackToRecent });
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +54,48 @@ export function NowPlaying({
   const art = track?.album.images[0]?.url;
   const artistNames = track?.artists.map((a: { name: string }) => a.name).join(', ') ?? '';
 
-  useLayoutEffect(() => {
+  const isFullPlayback = playback?.playbackMode === 'sdk' || playback?.playbackMode === 'embed';
+  const isPlayable =
+    loaded &&
+    interactive &&
+    !!(onPlay || (playback && (isFullPlayback || track!.previewUrl)));
+
+  const tastifyCurrentId = playback?.state.currentTrack?.id ?? null;
+  const showWaveform = loaded && tastifyCurrentId === track?.id;
+  const waveformPaused = showWaveform && !playback?.state.isPlaying;
+  const showPlayingChrome = showWaveform;
+
+  const handlePlay = useCallback(() => {
+    if (!track) return;
+    if (onPlay) {
+      onPlay(track);
+    } else if (playback) {
+      playback.play(track);
+    }
+  }, [track, onPlay, playback]);
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handlePlay();
+      }
+    },
+    [handlePlay],
+  );
+
+  const interactiveProps =
+    isPlayable
+      ? {
+          role: 'button' as const,
+          tabIndex: 0 as const,
+          onClick: handlePlay,
+          onKeyDown: handleKeyDown,
+          'aria-label': `Play ${track!.name} by ${artistNames}`,
+        }
+      : {};
+
+  useIsomorphicLayoutEffect(() => {
     const root = rootRef.current;
     if (!root) return;
     if (!loaded) {
@@ -58,7 +105,15 @@ export function NowPlaying({
       return;
     }
     syncNowPlayingSkeletonWidths(root);
-  }, [loaded, track?.name, artistNames, compact, showArt, Boolean(art), showLink]);
+  }, [
+    loaded,
+    track?.name,
+    artistNames,
+    compact,
+    showArt,
+    Boolean(art),
+    showWaveform,
+  ]);
 
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') return;
@@ -69,7 +124,7 @@ export function NowPlaying({
     const ro = new ResizeObserver(() => syncNowPlayingSkeletonWidths(root));
     ro.observe(content);
     return () => ro.disconnect();
-  }, [loaded, track?.name, artistNames, compact, showArt, Boolean(art), showLink]);
+  }, [loaded, track?.name, artistNames, compact, showArt, Boolean(art), showWaveform]);
 
   if (state.status === 'error') {
     return null;
@@ -103,7 +158,8 @@ export function NowPlaying({
     compact && 'tf-now-playing--compact',
     contained && 'tf-now-playing--contained',
     loaded && !isPlaying && 'tf-now-playing--idle',
-    loaded && compact && showLink && 'tf-now-playing--linked',
+    loaded && isPlayable && 'tf-now-playing--playable',
+    loaded && showPlayingChrome && 'tf-now-playing--playing',
   ]
     .filter(Boolean)
     .join(' ');
@@ -130,14 +186,6 @@ export function NowPlaying({
           </>
         )}
       </div>
-      {!compact && showLink && (
-        <div className="tf-now-playing__link-placeholder">
-          <div
-            className="tf-skeleton tf-skeleton--text-sm tf-now-playing__sk-line"
-            data-tf-sk="link"
-          />
-        </div>
-      )}
     </div>
   );
 
@@ -155,33 +203,15 @@ export function NowPlaying({
         <span className="tf-now-playing__track">{track!.name}</span>
         <span className="tf-now-playing__artist">{artistNames}</span>
       </div>
-      {!compact && showLink && (
-        <a
-          className="tf-now-playing__link"
-          href={track!.externalUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Open in Spotify
-        </a>
-      )}
+      {showWaveform && <Waveform paused={waveformPaused} />}
     </>
   );
 
-  const content =
-    compact && showLink && loaded ? (
-      <a
-        className="tf-now-playing__content"
-        href={track!.externalUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        aria-label={`Open ${track!.name} by ${artistNames} in Spotify`}
-      >
-        {contentChildren}
-      </a>
-    ) : (
-      <div className="tf-now-playing__content">{contentChildren}</div>
-    );
+  const content = (
+    <div className="tf-now-playing__content" {...interactiveProps}>
+      {contentChildren}
+    </div>
+  );
 
   return (
     <div
@@ -190,7 +220,7 @@ export function NowPlaying({
       aria-busy={isLoading || undefined}
       aria-live="polite"
     >
-      {!compact && showTitle && header !== null && (
+      {!compact && header !== null && (
         <h3 className="tf-now-playing__header">{header}</h3>
       )}
       <div className="tf-now-playing__body">

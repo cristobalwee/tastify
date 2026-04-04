@@ -93,6 +93,9 @@ export function PlaybackToast({ position: positionProp }: PlaybackToastProps) {
         <div className="tf-playback-toast__info">
           <span className="tf-playback-toast__name">{displayTrack?.name}</span>
           <span className="tf-playback-toast__artist">{artistNames}</span>
+          {state.previewEnded && (
+            <span className="tf-playback-toast__preview-ended">Preview ended</span>
+          )}
         </div>
         <div className="tf-playback-toast__controls">
           <button

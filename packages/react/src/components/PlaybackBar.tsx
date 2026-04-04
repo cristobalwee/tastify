@@ -90,6 +90,9 @@ export function PlaybackBar() {
           <div className="tf-playback-bar__info">
             <span className="tf-playback-bar__name">{displayTrack?.name}</span>
             <span className="tf-playback-bar__artist">{artistNames}</span>
+            {state.previewEnded && (
+              <span className="tf-playback-bar__preview-ended">Preview ended</span>
+            )}
           </div>
         </div>
 

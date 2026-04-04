@@ -96,7 +96,7 @@ Shows what you're currently listening to, with album art and a live progress bar
 | `pollInterval` | `number` | `15000` | Polling interval in ms |
 | `showArt` | `boolean` | `true` | Display album artwork |
 | `showProgress` | `boolean` | `true` | Show progress bar |
-| `showLink` | `boolean` | `true` | "Open in Spotify" link |
+| `interactive` | `boolean` | `true` | Click to play (requires `PlaybackProvider`) |
 | `compact` | `boolean` | `false` | Compact layout |
 | `fallback` | `ReactNode` | — | Shown when nothing is playing |
 | `className` | `string` | — | Custom class name |

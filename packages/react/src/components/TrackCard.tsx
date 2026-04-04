@@ -1,6 +1,7 @@
 import { useContext } from 'react';
 import type { TastifyTrack } from '@tastify/core';
 import { PlaybackContext } from '../playback.js';
+import { Waveform } from './Waveform.js';
 
 interface TrackCardProps {
   track?: TastifyTrack;
@@ -12,17 +13,6 @@ interface TrackCardProps {
   onPlay?: (track: TastifyTrack) => void;
   timestamp?: string;
   showTimestamp?: boolean;
-}
-
-function Waveform({ paused }: { paused?: boolean }) {
-  return (
-    <span className={`tf-waveform${paused ? ' tf-waveform--paused' : ''}`}>
-      <span className="tf-waveform__bar" />
-      <span className="tf-waveform__bar" />
-      <span className="tf-waveform__bar" />
-      <span className="tf-waveform__bar" />
-    </span>
-  );
 }
 
 export function TrackCardSkeleton({ layout, showRank }: { layout: 'list' | 'grid' | 'compact-grid'; showRank?: boolean }) {

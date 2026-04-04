@@ -851,7 +851,7 @@ interface NowPlayingProps {
   pollInterval?: number        // default 15_000
   showArt?: boolean            // default true
   showProgress?: boolean       // default true
-  showLink?: boolean           // default true — Spotify link icon
+  interactive?: boolean        // default true — click to play (use with PlaybackProvider)
   compact?: boolean            // default false — single-line mode
   fallback?: React.ReactNode   // render when nothing is playing
   className?: string
@@ -1126,7 +1126,9 @@ client.destroy()</code></pre></div>
 .tf-now-playing__progress      /* progress bar container */
 .tf-now-playing__progress-bar  /* progress bar fill */
 .tf-now-playing__pulse         /* animated "playing" indicator */
-.tf-now-playing__link          /* spotify external link */
+.tf-now-playing--playable      /* click-to-play (in-app player) */
+.tf-now-playing--playing       /* Tastify player is on this track */
+.tf-waveform                   /* bars — shared with track cards */
 
 .tf-top-tracks
 .tf-top-tracks--list

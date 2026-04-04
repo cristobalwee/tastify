@@ -86,10 +86,13 @@ export function mountPlaybackBar(options?: PlaybackBarMountOptions): PlaybackWid
     replaceChildren(container, [el]);
   }
 
+  let unsub3: (() => void) | null = null;
+
   function bind(p: AudioPlayer) {
     player = p;
     unsub1 = p.subscribe('statechange', render);
     unsub2 = p.subscribe('trackchange', render);
+    unsub3 = p.subscribe('ended', render);
     render();
   }
 
@@ -110,6 +113,7 @@ export function mountPlaybackBar(options?: PlaybackBarMountOptions): PlaybackWid
       destroyed = true;
       unsub1?.();
       unsub2?.();
+      unsub3?.();
       container.textContent = '';
       if (!options?.container && container.parentNode) {
         container.parentNode.removeChild(container);
@@ -162,10 +166,13 @@ export function mountPlaybackToast(options?: PlaybackToastMountOptions): Playbac
     replaceChildren(container, [el]);
   }
 
+  let unsub3: (() => void) | null = null;
+
   function bind(p: AudioPlayer) {
     player = p;
     unsub1 = p.subscribe('statechange', render);
     unsub2 = p.subscribe('trackchange', render);
+    unsub3 = p.subscribe('ended', render);
     render();
   }
 
@@ -189,6 +196,7 @@ export function mountPlaybackToast(options?: PlaybackToastMountOptions): Playbac
       destroyed = true;
       unsub1?.();
       unsub2?.();
+      unsub3?.();
       container.textContent = '';
       if (!options?.container && container.parentNode) {
         container.parentNode.removeChild(container);

@@ -45,7 +45,7 @@ describe('autoInit()', () => {
 
     autoInit();
 
-    const opts = mockMount.mock.calls[0]![1] as Record<string, unknown>;
+    const opts = mockMount.mock.calls[0]![1] as unknown as Record<string, unknown>;
     expect(opts['timeRange']).toBe('short_term');
     expect(opts['showRank']).toBe(true);
   });
@@ -58,7 +58,7 @@ describe('autoInit()', () => {
 
     autoInit();
 
-    const opts = mockMount.mock.calls[0]![1] as Record<string, unknown>;
+    const opts = mockMount.mock.calls[0]![1] as unknown as Record<string, unknown>;
     expect(opts['limit']).toBe(5);
     expect(opts['columns']).toBe(3);
   });
@@ -71,7 +71,7 @@ describe('autoInit()', () => {
 
     autoInit();
 
-    const opts = mockMount.mock.calls[0]![1] as Record<string, unknown>;
+    const opts = mockMount.mock.calls[0]![1] as unknown as Record<string, unknown>;
     expect(opts['showArt']).toBe(false);
   });
 
@@ -103,7 +103,7 @@ describe('autoInit()', () => {
     autoInit();
 
     expect(mockMount).toHaveBeenCalledTimes(1);
-    const opts = mockMount.mock.calls[0]![1] as Record<string, unknown>;
+    const opts = mockMount.mock.calls[0]![1] as unknown as Record<string, unknown>;
     expect(opts['tokenUrl']).toBeUndefined();
   });
 
@@ -115,7 +115,7 @@ describe('autoInit()', () => {
 
     autoInit();
 
-    const opts = mockMount.mock.calls[0]![1] as Record<string, unknown>;
+    const opts = mockMount.mock.calls[0]![1] as unknown as Record<string, unknown>;
     expect(opts['header']).toBe('On Repeat');
     expect(opts['layout']).toBe('grid');
   });

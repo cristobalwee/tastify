@@ -1,4 +1,11 @@
-import { TastifyClient, nowPlayingFromRecentTrack } from '@tastify/core';
+import {
+  TastifyClient,
+  getOrCreateEmbedPlayer,
+  nowPlayingFromRecentTrack,
+  type AudioPlayer,
+  type NowPlayingData,
+  type TastifyTrack,
+} from '@tastify/core';
 import type { TimeRange } from '@tastify/core';
 import {
   renderNowPlayingSkeleton,
@@ -29,8 +36,8 @@ export interface MountOptions {
   compact?: boolean;
   contained?: boolean;
   showArt?: boolean;
-  showLink?: boolean;
-  showTitle?: boolean;
+  /** When false, Now Playing is not clickable. Default true. */
+  interactive?: boolean;
   header?: string | null;
   fallback?: string;
   pollInterval?: number;
@@ -108,6 +115,9 @@ export function mount(
   let destroyed = false;
   let stopPolling: (() => void) | null = null;
   let animationFrameId: number | null = null;
+  let nowPlayingPlaybackUnsub: (() => void) | null = null;
+  let nowPlayingPlayerRef: AudioPlayer | null = null;
+  let lastNowPlayingData: NowPlayingData | null = null;
 
   function applyTheme(): void {
     const theme = opts.theme;
@@ -147,6 +157,10 @@ export function mount(
   function render(): void {
     if (destroyed) return;
 
+    nowPlayingPlaybackUnsub?.();
+    nowPlayingPlaybackUnsub = null;
+    nowPlayingPlayerRef = null;
+
     const { type } = opts;
 
     // Show skeleton immediately while data loads
@@ -166,9 +180,31 @@ export function mount(
   function renderNowPlayingWidget(): void {
     const fallbackToRecent = opts.fallbackToRecent === true;
 
-    async function resolveDisplay(
-      raw: import('@tastify/core').NowPlayingData | null,
-    ): Promise<import('@tastify/core').NowPlayingData | null> {
+    function buildNowPlayingPopulateOpts(
+      playerState?: { currentTrackId: string | null; isPlaying: boolean },
+    ): NowPlayingOptions {
+      const interactive = opts.interactive !== false;
+      const onPlay: ((track: TastifyTrack) => void) | undefined =
+        opts.onTrackPlay ??
+        (interactive
+          ? (track) => {
+              void getOrCreateEmbedPlayer().then((p) => p.play(track));
+            }
+          : undefined);
+      return {
+        compact: opts.compact,
+        contained: opts.contained,
+        showArt: opts.showArt,
+        interactive,
+        onPlay,
+        playerState,
+        header: opts.header,
+        fallback: opts.fallback,
+        pollInterval: opts.pollInterval,
+      };
+    }
+
+    async function resolveDisplay(raw: NowPlayingData | null): Promise<NowPlayingData | null> {
       if (raw || !fallbackToRecent) return raw;
       try {
         const recent = await client.getRecentlyPlayed({ limit: 1 });
@@ -179,12 +215,20 @@ export function mount(
       }
     }
 
-    function renderWithData(data: import('@tastify/core').NowPlayingData | null): void {
+    function renderWithData(data: NowPlayingData | null): void {
       if (destroyed) return;
+      lastNowPlayingData = data;
       const root = target!.querySelector<HTMLElement>('.tf-now-playing');
-      if (root) {
-        populateNowPlaying(root, data, opts);
+      if (!root) return;
+      let playerState: { currentTrackId: string | null; isPlaying: boolean } | undefined;
+      if (nowPlayingPlayerRef) {
+        const s = nowPlayingPlayerRef.getState();
+        playerState = {
+          currentTrackId: s.currentTrack?.id ?? null,
+          isPlaying: s.isPlaying,
+        };
       }
+      populateNowPlaying(root, data, buildNowPlayingPopulateOpts(playerState));
     }
 
     client
@@ -193,8 +237,9 @@ export function mount(
       .then(renderWithData)
       .catch(() => {
         if (!destroyed) {
+          lastNowPlayingData = null;
           const root = target!.querySelector<HTMLElement>('.tf-now-playing');
-          if (root) populateNowPlaying(root, null, opts);
+          if (root) populateNowPlaying(root, null, buildNowPlayingPopulateOpts());
         }
       });
 
@@ -202,6 +247,32 @@ export function mount(
     stopPolling = client.onNowPlayingChange((raw) => {
       void resolveDisplay(raw).then(renderWithData);
     }, interval);
+
+    void getOrCreateEmbedPlayer().then((p) => {
+      if (destroyed) return;
+      nowPlayingPlayerRef = p;
+      const r = (): void => {
+        if (destroyed) return;
+        const root = target!.querySelector<HTMLElement>('.tf-now-playing');
+        if (!root) return;
+        const s = p.getState();
+        populateNowPlaying(
+          root,
+          lastNowPlayingData,
+          buildNowPlayingPopulateOpts({
+            currentTrackId: s.currentTrack?.id ?? null,
+            isPlaying: s.isPlaying,
+          }),
+        );
+      };
+      const u1 = p.subscribe('statechange', r);
+      const u2 = p.subscribe('trackchange', r);
+      nowPlayingPlaybackUnsub = () => {
+        u1();
+        u2();
+      };
+      r();
+    });
   }
 
   function renderTopTracksWidget(): void {
@@ -332,6 +403,9 @@ export function mount(
           stopPolling();
           stopPolling = null;
         }
+        nowPlayingPlaybackUnsub?.();
+        nowPlayingPlaybackUnsub = null;
+        nowPlayingPlayerRef = null;
         if (animationFrameId != null) {
           cancelAnimationFrame(animationFrameId);
           animationFrameId = null;
@@ -365,6 +439,9 @@ export function mount(
         stopPolling();
         stopPolling = null;
       }
+      nowPlayingPlaybackUnsub?.();
+      nowPlayingPlaybackUnsub = null;
+      nowPlayingPlayerRef = null;
       if (animationFrameId != null) {
         cancelAnimationFrame(animationFrameId);
         animationFrameId = null;

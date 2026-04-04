@@ -55,7 +55,7 @@ Live "now playing" card with album art, progress bar, and Spotify link.
 | `pollInterval` | `number` | `15000` |
 | `showArt` | `boolean` | `true` |
 | `showProgress` | `boolean` | `true` |
-| `showLink` | `boolean` | `true` |
+| `interactive` | `boolean` | `true` |
 | `compact` | `boolean` | `false` |
 | `fallback` | `ReactNode` | — |
 | `className` | `string` | — |

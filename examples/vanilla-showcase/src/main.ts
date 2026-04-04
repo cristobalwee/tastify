@@ -444,7 +444,7 @@ function updateCode(main: HTMLElement, code: string) {
 
 function renderNowPlayingSection(main: HTMLElement) {
   let showArt = true;
-  let showLink = true;
+  let interactive = true;
   let compact = false;
   let contained = false;
   let pollInterval = 15;
@@ -454,7 +454,7 @@ function renderNowPlayingSection(main: HTMLElement) {
   type: 'now-playing',
   token: '...',
   showArt: ${showArt},
-  showLink: ${showLink},
+  interactive: ${interactive},
   compact: ${compact},
   contained: ${contained},
   pollInterval: ${pollInterval * 1000},
@@ -462,15 +462,15 @@ function renderNowPlayingSection(main: HTMLElement) {
   }
 
   function getOpts(): Partial<MountOptions> {
-    return { showArt, showLink, compact, contained, pollInterval: pollInterval * 1000 };
+    return { showArt, interactive, compact, contained, pollInterval: pollInterval * 1000 };
   }
 
-  const target = sectionLayout(main, 'NowPlaying', 'Displays the currently playing track as a spinning vinyl record with album art and Spotify link.', {
+  const target = sectionLayout(main, 'NowPlaying', 'Displays the currently playing track as a spinning vinyl record with album art; click to play in the built-in player.', {
     codeText: getCode(),
     buildControls(panel) {
       panel.append(
         toggleControl('showArt', showArt, (v) => { showArt = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
-        toggleControl('showLink', showLink, (v) => { showLink = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
+        toggleControl('interactive', interactive, (v) => { interactive = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
         toggleControl('compact', compact, (v) => { compact = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
         toggleControl('contained', contained, (v) => { contained = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
         numberControl('pollInterval (s)', pollInterval, 5, 120, (v) => { pollInterval = v; currentWidget?.update(getOpts()); updateCode(main, getCode()); }),
@@ -482,7 +482,7 @@ function renderNowPlayingSection(main: HTMLElement) {
     type: 'now-playing',
     token: activeToken,
     showArt,
-    showLink,
+    interactive,
     compact,
     contained,
     pollInterval: pollInterval * 1000,

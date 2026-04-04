@@ -102,51 +102,56 @@ describe('renderNowPlaying', () => {
     expect(el.querySelector('.tf-now-playing__art')).toBeTruthy();
     expect(el.querySelector('.tf-now-playing__track')!.textContent).toBe('Test Track');
     expect(el.querySelector('.tf-now-playing__artist')!.textContent).toBe('Test Artist');
-    expect(el.querySelector('.tf-now-playing__link')).toBeTruthy();
+    expect(el.querySelector('.tf-now-playing__link')).toBeNull();
   });
 
-  it('renders compact mode with link content layer', () => {
+  it('renders compact mode with playable content when onPlay is set', () => {
     const data: NowPlayingData = {
       isPlaying: true,
       track: makeTrack(),
       progressMs: 50_000,
       fetchedAt: Date.now(),
     };
-    const el = buildNowPlaying(data, { compact: true });
+    const onPlay = (): void => {};
+    const el = buildNowPlaying(data, { compact: true, onPlay });
 
     const content = el.querySelector('.tf-now-playing__content')!;
-    expect(content.tagName).toBe('A');
-    expect(content.getAttribute('href')).toBe('https://open.spotify.com/track/t1');
+    expect(content.tagName).toBe('DIV');
+    expect(content.getAttribute('role')).toBe('button');
     expect(el.classList.contains('tf-now-playing--compact')).toBe(true);
-    expect(el.classList.contains('tf-now-playing--linked')).toBe(true);
+    expect(el.classList.contains('tf-now-playing--playable')).toBe(true);
     expect(el.querySelector('.tf-now-playing__track')!.textContent).toBe('Test Track');
   });
 
-  it('omits the section header when showTitle is false (default layout only)', () => {
-    const data: NowPlayingData = {
-      isPlaying: true,
-      track: makeTrack(),
-      progressMs: 100_000,
-      fetchedAt: Date.now(),
-    };
-    const el = buildNowPlaying(data, { showTitle: false });
-    expect(el.querySelector('.tf-now-playing__header')).toBeNull();
-    expect(el.querySelector('.tf-now-playing__track')).toBeTruthy();
-  });
-
-  it('renders compact mode with div content when showLink is false', () => {
+  it('renders compact static content when interactive is false', () => {
     const data: NowPlayingData = {
       isPlaying: true,
       track: makeTrack(),
       progressMs: 50_000,
       fetchedAt: Date.now(),
     };
-    const el = buildNowPlaying(data, { compact: true, showLink: false });
+    const el = buildNowPlaying(data, { compact: true, interactive: false, onPlay: () => {} });
 
     expect(el.tagName).toBe('DIV');
     expect(el.classList.contains('tf-now-playing--compact')).toBe(true);
+    expect(el.classList.contains('tf-now-playing--playable')).toBe(false);
     const content = el.querySelector('.tf-now-playing__content')!;
     expect(content.tagName).toBe('DIV');
+    expect(content.getAttribute('role')).toBeNull();
+  });
+
+  it('shows waveform when playerState matches track', () => {
+    const data: NowPlayingData = {
+      isPlaying: true,
+      track: makeTrack({ id: 'x1' }),
+      progressMs: 50_000,
+      fetchedAt: Date.now(),
+    };
+    const el = buildNowPlaying(data, {
+      playerState: { currentTrackId: 'x1', isPlaying: true },
+    });
+    expect(el.querySelector('.tf-waveform')).toBeTruthy();
+    expect(el.classList.contains('tf-now-playing--playing')).toBe(true);
   });
 
   it('hides art when showArt=false', () => {

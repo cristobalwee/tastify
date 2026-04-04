@@ -90,24 +90,24 @@ type Tab = (typeof tabs)[number];
 
 function NowPlayingSection() {
   const [showArt, setShowArt] = useState(true);
-  const [showLink, setShowLink] = useState(true);
+  const [interactive, setInteractive] = useState(true);
   const [compact, setCompact] = useState(false);
   const [contained, setContained] = useState(false);
 
-  const code = `<NowPlaying${compact ? ' compact' : ''}${contained ? ' contained' : ''}${!showArt ? ' showArt={false}' : ''}${!showLink ? ' showLink={false}' : ''} />`;
+  const code = `<NowPlaying${compact ? ' compact' : ''}${contained ? ' contained' : ''}${!showArt ? ' showArt={false}' : ''}${!interactive ? ' interactive={false}' : ''} />`;
 
   return (
     <div className="pg-section">
       <div className="pg-controls">
         <Toggle label="showArt" value={showArt} onChange={setShowArt} />
-        <Toggle label="showLink" value={showLink} onChange={setShowLink} />
+        <Toggle label="interactive" value={interactive} onChange={setInteractive} />
         <Toggle label="compact" value={compact} onChange={setCompact} />
         <Toggle label="contained" value={contained} onChange={setContained} />
       </div>
       <div className="pg-preview">
         <NowPlaying
           showArt={showArt}
-          showLink={showLink}
+          interactive={interactive}
           compact={compact}
           contained={contained}
           fallback={<p className="pg-fallback">Nothing playing right now — play something on Spotify!</p>}

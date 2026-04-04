@@ -15,6 +15,8 @@ export interface PlaybackState {
   duration: number;
   currentTime: number;
   playbackMode: PlaybackMode;
+  /** True when a track (e.g. 30-second preview) ended naturally, distinguishing it from a user pause. */
+  previewEnded: boolean;
 }
 
 export type PlaybackEvent = 'statechange' | 'trackchange' | 'ended';
@@ -70,12 +72,15 @@ function createAudioPlayer(): AudioPlayer {
   audio.addEventListener('pause', () => emit('statechange'));
   audio.addEventListener('loadedmetadata', () => emit('statechange'));
 
+  let previewEnded = false;
+
   audio.addEventListener('ended', () => {
     emit('ended');
     // Auto-advance to next track in queue
     if (queueIndex < queue.length - 1) {
       playIndex(queueIndex + 1);
     } else {
+      previewEnded = true;
       emit('statechange');
     }
   });
@@ -95,6 +100,7 @@ function createAudioPlayer(): AudioPlayer {
     }
     if (targetIndex < 0 || targetIndex >= queue.length || !queue[targetIndex]!.previewUrl) return;
 
+    previewEnded = false;
     queueIndex = targetIndex;
     currentTrack = queue[targetIndex]!;
     audio.src = currentTrack.previewUrl!;
@@ -114,6 +120,7 @@ function createAudioPlayer(): AudioPlayer {
         return;
       }
 
+      previewEnded = false;
       currentTrack = track;
       queue = [track];
       queueIndex = 0;
@@ -128,11 +135,13 @@ function createAudioPlayer(): AudioPlayer {
     },
 
     resume(): void {
+      previewEnded = false;
       audio.play().catch(() => {});
     },
 
     togglePlayPause(): void {
       if (audio.paused && currentTrack) {
+        previewEnded = false;
         audio.play().catch(() => {});
       } else {
         audio.pause();
@@ -154,6 +163,7 @@ function createAudioPlayer(): AudioPlayer {
         duration,
         currentTime: audio.currentTime,
         playbackMode: 'preview',
+        previewEnded,
       };
     },
 
@@ -198,6 +208,7 @@ function createAudioPlayer(): AudioPlayer {
       currentTrack = null;
       queue = [];
       queueIndex = -1;
+      previewEnded = false;
       emit('trackchange');
       emit('statechange');
     },
@@ -238,6 +249,7 @@ async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> 
   let queueIndex = -1;
   let cachedState: Spotify.WebPlaybackState | null = null;
   let progressInterval: ReturnType<typeof setInterval> | null = null;
+  let previewEnded = false;
   // Map track URIs to TastifyTrack objects for metadata resolution
   const trackMap = new Map<string, TastifyTrack>();
 
@@ -299,9 +311,11 @@ async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> 
       state.position === 0 &&
       state.track_window.next_tracks.length === 0
     ) {
+      previewEnded = true;
       emit('ended');
       stopProgressPolling();
     } else if (!state.paused) {
+      previewEnded = false;
       startProgressPolling();
     } else {
       stopProgressPolling();
@@ -358,6 +372,7 @@ async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> 
   const player: AudioPlayer = {
     play(track: TastifyTrack): void {
       if (!deviceId) return;
+      previewEnded = false;
       trackMap.set(track.uri, track);
       currentTrack = track;
       queue = [track];
@@ -400,6 +415,7 @@ async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> 
           duration: 0,
           currentTime: 0,
           playbackMode: 'sdk',
+          previewEnded,
         };
       }
 
@@ -413,6 +429,7 @@ async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> 
         duration: durationSec,
         currentTime: currentTimeSec,
         playbackMode: 'sdk',
+        previewEnded,
       };
     },
 
@@ -468,6 +485,7 @@ async function createSDKPlayer(options: SDKPlayerOptions): Promise<AudioPlayer> 
       queue = [];
       queueIndex = -1;
       cachedState = null;
+      previewEnded = false;
       trackMap.clear();
       emit('trackchange');
       emit('statechange');
@@ -549,6 +567,9 @@ async function createEmbedPlayer(): Promise<AudioPlayer> {
         playIndex(queueIndex + 1);
       }
     }
+    if (!paused) {
+      ended = false;
+    }
 
     emit('statechange');
   });
@@ -612,6 +633,7 @@ async function createEmbedPlayer(): Promise<AudioPlayer> {
         duration,
         currentTime: position,
         playbackMode: 'embed',
+        previewEnded: ended,
       };
     },
 

@@ -72,6 +72,7 @@ const IDLE_STATE: PlaybackState = {
   duration: 0,
   currentTime: 0,
   playbackMode: 'embed',
+  previewEnded: false,
 };
 
 export function PlaybackProvider({
@@ -142,9 +143,13 @@ export function PlaybackProvider({
     const unsubTrack = player.subscribe('trackchange', () => {
       setState(player.getState());
     });
+    const unsubEnded = player.subscribe('ended', () => {
+      setState(player.getState());
+    });
     return () => {
       unsub();
       unsubTrack();
+      unsubEnded();
     };
   }, [player]);
 

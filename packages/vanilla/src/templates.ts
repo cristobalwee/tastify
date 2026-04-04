@@ -20,9 +20,11 @@ export interface NowPlayingOptions {
   compact?: boolean;
   contained?: boolean;
   showArt?: boolean;
-  showLink?: boolean;
-  /** When false, the default (non-compact) layout omits the section title `<h3>`. */
-  showTitle?: boolean;
+  /** When false, the widget is not clickable. Default true. */
+  interactive?: boolean;
+  onPlay?: (track: TastifyTrack) => void;
+  /** Local Tastify player state for waveform / playing chrome */
+  playerState?: { currentTrackId: string | null; isPlaying: boolean };
   header?: string | null;
   fallback?: string;
   pollInterval?: number;
@@ -441,9 +443,7 @@ export function renderNowPlayingSkeleton(opts: NowPlayingOptions): HTMLElement {
   if (opts.contained) classes.push('tf-now-playing--contained');
 
   const header = opts.header ?? 'Listening to';
-  const showTitle = opts.showTitle !== false;
   const showArt = opts.showArt !== false;
-  const showLink = opts.showLink !== false;
   const compact = !!opts.compact;
 
   const skeletonChildren: (HTMLElement | Text)[] = [];
@@ -472,20 +472,9 @@ export function renderNowPlayingSkeleton(opts: NowPlayingOptions): HTMLElement {
 
   skeletonChildren.push(h('div', { class: 'tf-now-playing__info' }, infoSkChildren));
 
-  if (!compact && showLink) {
-    skeletonChildren.push(
-      h('div', { class: 'tf-now-playing__link-placeholder' }, [
-        h('div', {
-          class: 'tf-skeleton tf-skeleton--text-sm tf-now-playing__sk-line',
-          'data-tf-sk': 'link',
-        }),
-      ]),
-    );
-  }
-
   const rootChildren: (HTMLElement | Text)[] = [];
 
-  if (!compact && showTitle && header !== null) {
+  if (!compact && header !== null) {
     rootChildren.push(h('h3', { class: 'tf-now-playing__header' }, [header]));
   }
 
@@ -515,7 +504,9 @@ export function populateNowPlaying(
   const {
     compact = false,
     showArt = true,
-    showLink = true,
+    interactive = true,
+    onPlay,
+    playerState,
     fallback,
   } = opts;
 
@@ -523,7 +514,12 @@ export function populateNowPlaying(
 
   if (!data) {
     root.classList.add('tf-now-playing--idle');
-    root.classList.remove('tf-now-playing--loaded', 'tf-now-playing--linked');
+    root.classList.remove(
+      'tf-now-playing--loaded',
+      'tf-now-playing--linked',
+      'tf-now-playing--playable',
+      'tf-now-playing--playing',
+    );
     root.removeAttribute('aria-busy');
     if (skeleton) skeleton.setAttribute('aria-hidden', 'true');
     root.querySelectorAll<HTMLElement>('.tf-now-playing__sk-line').forEach((el) => {
@@ -546,6 +542,12 @@ export function populateNowPlaying(
   root.removeAttribute('aria-busy');
   if (skeleton) skeleton.setAttribute('aria-hidden', 'true');
 
+  const playable = interactive && !!onPlay;
+  const tastifyPlayingThis = playerState?.currentTrackId === track.id;
+  root.classList.toggle('tf-now-playing--playable', playable);
+  root.classList.toggle('tf-now-playing--playing', tastifyPlayingThis);
+  root.classList.remove('tf-now-playing--linked');
+
   // Build content children
   const contentChildren: (HTMLElement | Text)[] = [];
 
@@ -567,15 +569,10 @@ export function populateNowPlaying(
     ]),
   );
 
-  if (!compact && showLink) {
-    contentChildren.push(
-      h('a', {
-        class: 'tf-now-playing__link',
-        href: track.externalUrl,
-        target: '_blank',
-        rel: 'noopener noreferrer',
-      }, ['Open in Spotify']),
-    );
+  if (tastifyPlayingThis && playerState) {
+    const waveform = createWaveform();
+    if (!playerState.isPlaying) waveform.classList.add('tf-waveform--paused');
+    contentChildren.push(waveform);
   }
 
   // Replace content layer
@@ -584,24 +581,22 @@ export function populateNowPlaying(
   const oldContent = body.querySelector<HTMLElement>('.tf-now-playing__content');
   if (oldContent) oldContent.remove();
 
-  if (compact && showLink) {
-    root.classList.add('tf-now-playing--linked');
-    const contentEl = h(
-      'a',
-      {
-        class: 'tf-now-playing__content',
-        href: track.externalUrl,
-        target: '_blank',
-        rel: 'noopener noreferrer',
-        'aria-label': `Open ${track.name} by ${artistNames} in Spotify`,
-      },
-      contentChildren,
-    );
-    body.appendChild(contentEl);
-  } else {
-    root.classList.remove('tf-now-playing--linked');
-    body.appendChild(h('div', { class: 'tf-now-playing__content' }, contentChildren));
+  const contentEl = h('div', { class: 'tf-now-playing__content' }, contentChildren);
+
+  if (playable && onPlay) {
+    contentEl.setAttribute('role', 'button');
+    contentEl.setAttribute('tabindex', '0');
+    contentEl.setAttribute('aria-label', `Play ${track.name} by ${artistNames}`);
+    contentEl.addEventListener('click', () => onPlay(track));
+    contentEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onPlay(track);
+      }
+    });
   }
+
+  body.appendChild(contentEl);
 
   syncNowPlayingSkeletonWidths(root);
   requestAnimationFrame(() => syncNowPlayingSkeletonWidths(root));
