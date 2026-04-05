@@ -8,3 +8,4 @@ coverage
 .env.local/
 packages/cli/.env
 packages/cli/.env.local
+apps/landing/.env
