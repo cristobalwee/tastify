@@ -8,9 +8,8 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@tastify/react"><img src="https://img.shields.io/npm/v/@tastify/react?label=%40tastify%2Freact&color=1db954" alt="npm @tastify/react" /></a>
+  <a href="https://www.npmjs.com/package/@tastify/vanilla"><img src="https://img.shields.io/npm/v/@tastify/vanilla?label=%40tastify%2Fcore&color=1db954" alt="npm @tastify/vanilla" /></a>
   <a href="https://www.npmjs.com/package/@tastify/core"><img src="https://img.shields.io/npm/v/@tastify/core?label=%40tastify%2Fcore&color=1db954" alt="npm @tastify/core" /></a>
-  <a href="https://github.com/cristobalwee/tastify/actions"><img src="https://img.shields.io/github/actions/workflow/status/cristobalwee/tastify/ci.yml?branch=main&label=build" alt="CI" /></a>
-  <a href="https://github.com/cristobalwee/tastify/blob/main/LICENSE"><img src="https://img.shields.io/github/license/cristobalwee/tastify" alt="MIT License" /></a>
   <a href="https://github.com/cristobalwee/tastify"><img src="https://img.shields.io/github/stars/cristobalwee/tastify?style=social" alt="GitHub stars" /></a>
 </p>
 
