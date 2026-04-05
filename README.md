@@ -71,6 +71,33 @@ npx tastify init
 
 It walks you through Spotify OAuth, creates a serverless function for your platform (Vercel, Netlify, Cloudflare Workers, or Express), and writes your `.env.local` with the right credentials. Takes about 30 seconds.
 
+### Deploying to production
+
+The CLI writes your credentials to `.env.local` for local development, but in production you need to set the same three variables in your platform's environment variable settings — they are never read from `.env.local` at runtime.
+
+| Variable | Where to set it |
+|---|---|
+| `SPOTIFY_CLIENT_ID` | Platform dashboard (Vercel / Netlify / Cloudflare / etc.) |
+| `SPOTIFY_CLIENT_SECRET` | Platform dashboard |
+| `SPOTIFY_REFRESH_TOKEN` | Platform dashboard |
+
+**Platform notes**
+
+- **Vercel** — function goes in `api/spotify/token.ts`. Environment variables set in Project Settings → Environment Variables.
+- **Netlify** — function goes in `netlify/functions/spotify-token.ts`. Variables set in Site Settings → Environment Variables.
+- **Cloudflare Pages** — function goes in `functions/api/spotify/token.ts` at the **root of your repository** (not inside a subdirectory). Variables set in Pages project → Settings → Environment Variables. Note: if your project root is set to a subdirectory, Cloudflare looks for `functions/` relative to that subdirectory.
+- **Express** — set variables in your host's environment or a `.env` file loaded by `dotenv`.
+
+**Verifying the endpoint**
+
+Before testing your components, confirm the token endpoint is working by visiting it directly in your browser:
+
+```
+https://your-site.example.com/api/spotify/token
+```
+
+It should return JSON with an `access_token` field. If it returns an error or HTML, the function isn't deployed correctly or the credentials aren't set.
+
 ## Packages
 
 | Package | Description | Docs |

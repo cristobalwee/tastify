@@ -1,5 +1,5 @@
 {
-  "name": "tastify",
+  "name": "@tastify/cli",
   "version": "0.0.1",
   "description": "CLI setup tool for tastify Spotify widgets",
   "type": "module",
