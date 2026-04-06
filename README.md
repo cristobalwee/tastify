@@ -67,7 +67,7 @@ No build step or framework needed.
 Spotify doesn't allow client-side token refresh (the client secret would be exposed). You need a small server-side endpoint that exchanges your refresh token for a short-lived access token. The CLI generates this for you:
 
 ```bash
-npx tastify init
+npx @tastify/cli init
 ```
 
 It walks you through Spotify OAuth, creates a serverless function for your platform (Vercel, Netlify, Cloudflare Workers, or Express), and writes your `.env.local` with the right credentials. Takes about 30 seconds.
@@ -106,7 +106,7 @@ It should return JSON with an `access_token` field. If it returns an error or HT
 | [`@tastify/core`](./packages/core) | Spotify API client, caching, polling, playback engine | [README](./packages/core/README.md) |
 | [`@tastify/react`](./packages/react) | React components, hooks, and playback UI | [README](./packages/react/README.md) |
 | [`@tastify/vanilla`](./packages/vanilla) | Zero-framework widgets + data-attribute auto-init | [README](./packages/vanilla/README.md) |
-| [`tastify` CLI](./packages/cli) | `npx tastify init` — scaffolds your token endpoint | — |
+| [`@tastify/cli`](./packages/cli) | `npx @tastify/cli init` — scaffolds your token endpoint | — |
 
 ## Components
 
