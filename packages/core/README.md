@@ -37,6 +37,7 @@ Optional: `cacheTTL` overrides the default soft TTL for all endpoints.
 ```ts
 const nowPlaying = await client.getNowPlaying()
 const topTracks  = await client.getTopTracks({ timeRange: 'short_term', limit: 10 })
+const topAlbums  = await client.getTopAlbums({ timeRange: 'short_term', limit: 10 })
 const topArtists = await client.getTopArtists({ timeRange: 'long_term', limit: 5 })
 const recent     = await client.getRecentlyPlayed({ limit: 20 })
 const artistHits = await client.getArtistTopTracks('6eUKZXaKkcviH0Ku9w2n3V')
@@ -46,6 +47,7 @@ const artistHits = await client.getArtistTopTracks('6eUKZXaKkcviH0Ku9w2n3V')
 |---|---|---|
 | `getNowPlaying()` | `NowPlayingData \| null` | `null` when nothing is playing |
 | `getTopTracks(opts?)` | `TopTracksData` | `timeRange`, `limit` |
+| `getTopAlbums(opts?)` | `TopAlbumsData` | `timeRange`, `limit` |
 | `getTopArtists(opts?)` | `TopArtistsData` | `timeRange`, `limit` |
 | `getRecentlyPlayed(opts?)` | `RecentlyPlayedData` | `limit` |
 | `getArtistTopTracks(id, opts?)` | `TastifyTrack[]` | Optional `market` |
@@ -152,7 +154,9 @@ import type {
   TastifyImage,
   NowPlayingData,
   TopTracksData,
+  TopAlbumsData,
   TopArtistsData,
+  TastifyTopAlbum,
   RecentlyPlayedData,
   TimeRange,        // 'short_term' | 'medium_term' | 'long_term'
   DataState,

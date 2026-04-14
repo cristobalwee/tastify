@@ -26,6 +26,7 @@ Drop elements into your HTML and they render automatically:
 ```html
 <div data-tastify="now-playing"></div>
 <div data-tastify="top-tracks" data-limit="5" data-layout="grid" data-columns="3"></div>
+<div data-tastify="top-albums" data-limit="5" data-layout="grid" data-columns="3"></div>
 <div data-tastify="top-artists" data-layout="grid" data-show-genres></div>
 <div data-tastify="recently-played" data-limit="10" data-show-timestamp></div>
 ```
@@ -55,24 +56,24 @@ widget.destroy()
 
 | Option | Type | Default | Applies to |
 |---|---|---|---|
-| `type` | `'now-playing' \| 'top-tracks' \| 'top-artists' \| 'recently-played'` | — | **Required** |
+| `type` | `'now-playing' \| 'top-tracks' \| 'top-albums' \| 'top-artists' \| 'recently-played'` | — | **Required** |
 | `tokenUrl` | `string` | — | All |
 | `getToken` | `() => Promise<string>` | — | All |
 | `token` | `string` | — | All |
 | `theme` | `'light' \| 'dark' \| 'auto'` | — | All |
 | `compact` | `boolean` | `false` | NowPlaying |
-| `showArt` | `boolean` | `true` | NowPlaying, TopTracks |
+| `showArt` | `boolean` | `true` | NowPlaying, TopTracks, TopAlbums |
 | `showProgress` | `boolean` | `true` | NowPlaying |
 | `interactive` | `boolean` | `true` | NowPlaying |
 | `fallback` | `string` | — | NowPlaying |
 | `pollInterval` | `number` | `15000` | NowPlaying |
-| `timeRange` | `'short_term' \| 'medium_term' \| 'long_term'` | `'medium_term'` | TopTracks, TopArtists |
-| `limit` | `number` | `20` | TopTracks, TopArtists, RecentlyPlayed |
-| `layout` | `'list' \| 'grid' \| 'compact-grid'` | varies | TopTracks, TopArtists, RecentlyPlayed |
-| `showRank` | `boolean` | `true` | TopTracks |
-| `columns` | `number` | — | TopTracks, TopArtists (grid) |
-| `header` | `string \| null` | — | TopTracks, TopArtists |
-| `showTimeRangeSelector` | `boolean` | `false` | TopTracks, TopArtists |
+| `timeRange` | `'short_term' \| 'medium_term' \| 'long_term'` | `'medium_term'` | TopTracks, TopAlbums, TopArtists |
+| `limit` | `number` | `20` | TopTracks, TopAlbums, TopArtists, RecentlyPlayed |
+| `layout` | `'list' \| 'grid' \| 'compact-grid'` | varies | TopTracks, TopAlbums, TopArtists, RecentlyPlayed |
+| `showRank` | `boolean` | `true` | TopTracks, TopAlbums |
+| `columns` | `number` | — | TopTracks, TopAlbums, TopArtists (grid) |
+| `header` | `string \| null` | — | TopTracks, TopAlbums, TopArtists |
+| `showTimeRangeSelector` | `boolean` | `false` | TopTracks, TopAlbums, TopArtists |
 | `showGenres` | `boolean` | `false` | TopArtists |
 | `showTimestamp` | `boolean` | `true` | RecentlyPlayed |
 | `groupByDay` | `boolean` | `false` | RecentlyPlayed |

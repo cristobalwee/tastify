@@ -15,7 +15,7 @@ npm install @tastify/react
 ## Quick Start
 
 ```tsx
-import { TastifyProvider, NowPlaying, TopTracks, TopArtists } from '@tastify/react'
+import { TastifyProvider, NowPlaying, TopTracks, TopAlbums, TopArtists } from '@tastify/react'
 import '@tastify/react/styles.css'
 
 function App() {
@@ -23,6 +23,7 @@ function App() {
     <TastifyProvider tokenUrl="/api/spotify/token">
       <NowPlaying />
       <TopTracks limit={5} />
+      <TopAlbums limit={5} />
       <TopArtists layout="grid" columns={3} />
     </TastifyProvider>
   )
@@ -70,8 +71,8 @@ Live "now playing" card with album art, progress bar, and Spotify link.
 | Prop | Type | Default |
 |---|---|---|
 | `timeRange` | `'short_term' \| 'medium_term' \| 'long_term'` | `'medium_term'` |
-| `limit` | `number` | `20` |
-| `layout` | `'list' \| 'grid'` | `'list'` |
+| `limit` | `number` | `5` |
+| `layout` | `'list' \| 'grid' \| 'compact-grid'` | `'list'` |
 | `showRank` | `boolean` | `true` |
 | `showArt` | `boolean` | `true` |
 | `columns` | `number` | — |
@@ -97,6 +98,25 @@ Live "now playing" card with album art, progress bar, and Spotify link.
 | `showTimeRangeSelector` | `boolean` | `false` |
 | `className` | `string` | — |
 | `children` | `(data: TopArtistsData) => ReactNode` | — |
+
+### `<TopAlbums />`
+
+```tsx
+<TopAlbums timeRange="short_term" limit={10} layout="grid" columns={3} showTimeRangeSelector />
+```
+
+| Prop | Type | Default |
+|---|---|---|
+| `timeRange` | `'short_term' \| 'medium_term' \| 'long_term'` | `'medium_term'` |
+| `limit` | `number` | `20` |
+| `layout` | `'list' \| 'grid'` | `'list'` |
+| `showRank` | `boolean` | `true` |
+| `showArt` | `boolean` | `true` |
+| `columns` | `number` | — |
+| `header` | `string` | — |
+| `showTimeRangeSelector` | `boolean` | `false` |
+| `className` | `string` | — |
+| `children` | `(data: TopAlbumsData) => ReactNode` | — |
 
 ### `<RecentlyPlayed />`
 
@@ -127,11 +147,12 @@ Standalone time range tabs you can use with your own layout:
 Use hooks directly when you need full control over rendering:
 
 ```tsx
-import { useNowPlaying, useTopTracks, useTopArtists, useRecentlyPlayed } from '@tastify/react'
+import { useNowPlaying, useTopTracks, useTopAlbums, useTopArtists, useRecentlyPlayed } from '@tastify/react'
 
 function MyWidget() {
   const { data, status, error } = useNowPlaying({ pollInterval: 10_000 })
   const topTracks = useTopTracks({ timeRange: 'short_term', limit: 5 })
+  const topAlbums = useTopAlbums({ timeRange: 'short_term', limit: 5 })
   const topArtists = useTopArtists({ limit: 10 })
   const recent = useRecentlyPlayed({ limit: 15 })
 

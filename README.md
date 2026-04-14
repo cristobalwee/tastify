@@ -31,7 +31,7 @@ npm install @tastify/react
 ```
 
 ```tsx
-import { TastifyProvider, NowPlaying, TopTracks } from '@tastify/react'
+import { TastifyProvider, NowPlaying, TopTracks, TopAlbums } from '@tastify/react'
 import '@tastify/react/styles.css'
 
 function App() {
@@ -39,6 +39,7 @@ function App() {
     <TastifyProvider tokenUrl="/api/spotify/token">
       <NowPlaying />
       <TopTracks limit={5} />
+      <TopAlbums limit={5} />
     </TastifyProvider>
   )
 }
@@ -53,6 +54,7 @@ function App() {
 
 <div data-tastify="now-playing"></div>
 <div data-tastify="top-tracks" data-limit="5"></div>
+<div data-tastify="top-albums" data-limit="5"></div>
 <div data-tastify="recently-played"></div>
 
 <script src="https://unpkg.com/@tastify/vanilla" data-tastify-token-url="/api/spotify/token"></script>
@@ -165,6 +167,27 @@ Your top artists with optional genre tags.
 | `layout` | `'grid' \| 'list'` | `'grid'` | Layout mode |
 | `columns` | `number` | — | Grid column count |
 | `showGenres` | `boolean` | `false` | Show genre tags |
+| `header` | `string` | — | Section heading |
+| `showTimeRangeSelector` | `boolean` | `false` | Interactive time range tabs |
+| `className` | `string` | — | Custom class name |
+| `children` | `(data) => ReactNode` | — | Headless render prop |
+
+### TopAlbums
+
+Your most-played albums over a configurable time range.
+
+```tsx
+<TopAlbums timeRange="short_term" limit={10} layout="grid" columns={3} />
+```
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `timeRange` | `'short_term' \| 'medium_term' \| 'long_term'` | `'medium_term'` | Spotify time range |
+| `limit` | `number` | `5` | Number of albums |
+| `layout` | `'list' \| 'grid' \| 'compact-grid'` | `'list'` | Layout mode |
+| `showRank` | `boolean` | `true` | Show rank numbers |
+| `showArt` | `boolean` | `true` | Display artwork |
+| `columns` | `number` | — | Grid column count |
 | `header` | `string` | — | Section heading |
 | `showTimeRangeSelector` | `boolean` | `false` | Interactive time range tabs |
 | `className` | `string` | — | Custom class name |
