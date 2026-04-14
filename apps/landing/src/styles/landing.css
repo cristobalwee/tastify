@@ -162,7 +162,7 @@ img {
 }
 
 .hero__heading {
-  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-size: clamp(2rem, 6vw, 3.5rem);
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -174,7 +174,7 @@ img {
   font-size: 1.125rem;
   max-width: 560px;
   margin: 0 auto 2.5rem;
-  line-height: 1.7;
+  line-height: 1.5;
 }
 
 .hero__actions {

@@ -1,9 +1,11 @@
 import type {
   NowPlayingData,
   TopTracksData,
+  TopAlbumsData,
   TopArtistsData,
   RecentlyPlayedData,
   TastifyTrack,
+  TastifyTopAlbum,
   TastifyArtist,
   TimeRange,
 } from '@tastify/core';
@@ -31,6 +33,17 @@ export interface NowPlayingOptions {
 }
 
 export interface TopTracksOptions {
+  timeRange?: TimeRange;
+  limit?: number;
+  layout?: 'list' | 'grid' | 'compact-grid';
+  showRank?: boolean;
+  showArt?: boolean;
+  columns?: number;
+  header?: string | null;
+  showTimeRangeSelector?: boolean;
+}
+
+export interface TopAlbumsOptions {
   timeRange?: TimeRange;
   limit?: number;
   layout?: 'list' | 'grid' | 'compact-grid';
@@ -247,6 +260,99 @@ export function populateTrackCard(
 
 export function renderTrackCardSkeleton(layout: 'list' | 'grid' | 'compact-grid', showRank?: boolean): HTMLElement {
   return renderTrackCard(undefined, layout, { showRank });
+}
+
+function buildAlbumCardContent(
+  album: TastifyTopAlbum,
+  layout: 'list' | 'grid' | 'compact-grid',
+  opts: {
+    rank?: number;
+    showArt?: boolean;
+  },
+): HTMLElement {
+  const art = album.images[0]?.url;
+  const artistNames = album.artists.map((a) => a.name).join(', ');
+  const children: (HTMLElement | Text)[] = [];
+
+  if (layout === 'grid') {
+    if (opts.showArt !== false && art) {
+      children.push(
+        h('img', { class: 'tf-track-card__art', src: art, alt: album.name, loading: 'lazy' }),
+      );
+    }
+    children.push(h('span', { class: 'tf-track-card__name' }, [album.name]));
+    children.push(h('span', { class: 'tf-track-card__artist' }, [artistNames]));
+  } else {
+    if (opts.rank != null) {
+      children.push(h('span', { class: 'tf-track-card__rank' }, [String(opts.rank)]));
+    }
+    if (opts.showArt !== false && art) {
+      children.push(
+        h('img', { class: 'tf-track-card__art', src: art, alt: album.name, loading: 'lazy' }),
+      );
+    }
+    children.push(
+      h('div', { class: 'tf-track-card__info' }, [
+        h('span', { class: 'tf-track-card__name' }, [album.name]),
+        h('span', { class: 'tf-track-card__artist' }, [artistNames]),
+      ]),
+    );
+  }
+
+  return h('div', { class: 'tf-card__content' }, children);
+}
+
+export function renderAlbumCard(
+  album: TastifyTopAlbum | undefined,
+  layout: 'list' | 'grid' | 'compact-grid',
+  opts: {
+    rank?: number;
+    showRank?: boolean;
+    showArt?: boolean;
+  },
+): HTMLElement {
+  const loaded = !!album;
+  const cardClasses = [
+    'tf-track-card',
+    `tf-track-card--${layout}`,
+    loaded && 'tf-track-card--loaded',
+  ].filter(Boolean).join(' ');
+
+  const skeletonLayer = buildTrackCardSkeleton(layout, opts.showRank);
+  if (loaded) skeletonLayer.setAttribute('aria-hidden', 'true');
+
+  const contentLayer = album
+    ? buildAlbumCardContent(album, layout, opts)
+    : h('div', { class: 'tf-card__content' });
+
+  return h('div', { class: cardClasses }, [skeletonLayer, contentLayer]);
+}
+
+export function populateAlbumCard(
+  card: HTMLElement,
+  album: TastifyTopAlbum,
+  opts: {
+    rank?: number;
+    showArt?: boolean;
+  },
+): void {
+  const layout = card.classList.contains('tf-track-card--grid') ? 'grid'
+    : card.classList.contains('tf-track-card--compact-grid') ? 'compact-grid'
+    : 'list';
+  const oldContent = card.querySelector('.tf-card__content');
+  if (!oldContent) return;
+
+  const newContent = buildAlbumCardContent(album, layout, opts);
+  oldContent.replaceChildren(...Array.from(newContent.childNodes));
+
+  card.classList.add('tf-track-card--loaded');
+
+  const skeletonLayer = card.querySelector('.tf-card__skeleton');
+  if (skeletonLayer) skeletonLayer.setAttribute('aria-hidden', 'true');
+}
+
+export function renderAlbumCardSkeleton(layout: 'list' | 'grid' | 'compact-grid', showRank?: boolean): HTMLElement {
+  return renderAlbumCard(undefined, layout, { showRank });
 }
 
 function buildArtistCardSkeleton(layout: 'grid' | 'list' | 'compact-grid'): HTMLElement {
@@ -678,6 +784,84 @@ export function renderTopTracks(
   children.push(listEl);
 
   return h('div', { class: `tf-top-tracks tf-top-tracks--${layout}` }, children);
+}
+
+export function renderTopAlbumsSkeleton(opts: TopAlbumsOptions): HTMLElement {
+  const {
+    layout = 'list',
+    columns = 3,
+    limit = 5,
+    header = 'Top Albums',
+    showRank = true,
+    showTimeRangeSelector = false,
+  } = opts;
+
+  const children: (HTMLElement | Text)[] = [];
+  if (header !== null) {
+    children.push(h('h3', { class: 'tf-top-tracks__header' }, [header]));
+  }
+
+  if (showTimeRangeSelector) {
+    children.push(renderTimeRangeSelectorSkeleton());
+  }
+
+  const listEl = h(
+    'div',
+    { class: 'tf-top-tracks__list' },
+    Array.from({ length: limit }, () => renderAlbumCardSkeleton(layout, showRank)),
+  );
+
+  if (layout !== 'list') {
+    setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
+  }
+
+  children.push(listEl);
+  return h('div', { class: `tf-top-tracks tf-top-tracks--${layout} tf-top-albums` }, children);
+}
+
+export function renderTopAlbums(
+  data: TopAlbumsData,
+  opts: TopAlbumsOptions,
+  onTimeRangeChange?: (range: TimeRange) => void,
+): HTMLElement {
+  const {
+    timeRange,
+    layout = 'list',
+    showRank = true,
+    showArt = true,
+    columns = 3,
+    header = 'Top Albums',
+    showTimeRangeSelector = false,
+  } = opts;
+
+  const children: (HTMLElement | Text)[] = [];
+
+  if (header !== null) {
+    children.push(h('h3', { class: 'tf-top-tracks__header' }, [header]));
+  }
+
+  if (showTimeRangeSelector) {
+    children.push(renderTimeRangeSelector(timeRange ?? 'medium_term', onTimeRangeChange));
+  }
+
+  const listEl = h(
+    'div',
+    { class: 'tf-top-tracks__list' },
+    data.albums.map((album, i) =>
+      renderAlbumCard(album, layout, {
+        rank: layout !== 'grid' && showRank ? i + 1 : undefined,
+        showArt,
+      }),
+    ),
+  );
+
+  if (layout !== 'list') {
+    setStyles(listEl, { 'grid-template-columns': `repeat(${columns}, 1fr)` });
+  }
+
+  children.push(listEl);
+
+  return h('div', { class: `tf-top-tracks tf-top-tracks--${layout} tf-top-albums` }, children);
 }
 
 export function renderTopArtistsSkeleton(opts: TopArtistsOptions): HTMLElement {

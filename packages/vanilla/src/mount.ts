@@ -11,10 +11,12 @@ import {
   renderNowPlayingSkeleton,
   populateNowPlaying,
   renderTopTracksSkeleton,
+  renderTopAlbumsSkeleton,
   renderTopArtistsSkeleton,
   renderRecentlyPlayedSkeleton,
   renderTimeRangeSelector,
   populateTrackCard,
+  populateAlbumCard,
   populateArtistCard,
   formatRelativeTime,
 } from './templates.js';
@@ -27,7 +29,7 @@ import { replaceChildren } from './renderer.js';
 export type TastifyTheme = 'light' | 'dark' | 'auto';
 
 export interface MountOptions {
-  type: 'now-playing' | 'top-tracks' | 'top-artists' | 'recently-played';
+  type: 'now-playing' | 'top-tracks' | 'top-albums' | 'top-artists' | 'recently-played';
   tokenUrl?: string;
   getToken?: () => Promise<string>;
   token?: string;
@@ -140,6 +142,11 @@ export function mount(
         ...opts,
         layout: (opts.layout as 'list' | 'grid' | 'compact-grid') ?? 'list',
       });
+    } else if (type === 'top-albums') {
+      skeleton = renderTopAlbumsSkeleton({
+        ...opts,
+        layout: (opts.layout as 'list' | 'grid' | 'compact-grid') ?? 'list',
+      });
     } else if (type === 'top-artists') {
       skeleton = renderTopArtistsSkeleton({
         ...opts,
@@ -170,6 +177,8 @@ export function mount(
       renderNowPlayingWidget();
     } else if (type === 'top-tracks') {
       renderTopTracksWidget();
+    } else if (type === 'top-albums') {
+      renderTopAlbumsWidget();
     } else if (type === 'top-artists') {
       renderTopArtistsWidget();
     } else if (type === 'recently-played') {
@@ -352,6 +361,51 @@ export function mount(
           });
 
           for (let i = data.artists.length; i < cards.length; i++) {
+            cards[i]!.remove();
+          }
+        })
+        .catch(() => {});
+    }
+
+    fetchAndUpdate();
+  }
+
+  function renderTopAlbumsWidget(): void {
+    let currentRange: TimeRange = opts.timeRange ?? 'medium_term';
+
+    function fetchAndUpdate(): void {
+      client
+        .getTopAlbums({ timeRange: currentRange, limit: opts.limit })
+        .then((data) => {
+          if (destroyed) return;
+
+          const layout = (opts.layout as 'list' | 'grid' | 'compact-grid') ?? 'list';
+          const showRank = opts.showRank !== false;
+          const showArt = opts.showArt !== false;
+
+          if (opts.showTimeRangeSelector) {
+            const oldSelector = target!.querySelector('.tf-time-range-selector');
+            if (oldSelector) {
+              const newSelector = renderTimeRangeSelector(currentRange, (range) => {
+                currentRange = range;
+                renderSkeleton();
+                fetchAndUpdate();
+              });
+              oldSelector.replaceWith(newSelector);
+            }
+          }
+
+          const cards = Array.from(target!.querySelectorAll<HTMLElement>('.tf-track-card'));
+          data.albums.forEach((album, i) => {
+            if (i < cards.length) {
+              populateAlbumCard(cards[i]!, album, {
+                rank: layout !== 'grid' && showRank ? i + 1 : undefined,
+                showArt,
+              });
+            }
+          });
+
+          for (let i = data.albums.length; i < cards.length; i++) {
             cards[i]!.remove();
           }
         })

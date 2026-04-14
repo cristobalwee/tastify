@@ -3,15 +3,18 @@ import {
   renderNowPlayingSkeleton,
   populateNowPlaying,
   renderTopTracks,
+  renderTopAlbums,
   renderTopArtists,
   renderRecentlyPlayed,
 } from '../templates.js';
 import type {
   NowPlayingData,
   TopTracksData,
+  TopAlbumsData,
   TopArtistsData,
   RecentlyPlayedData,
   TastifyTrack,
+  TastifyTopAlbum,
   TastifyArtist,
 } from '@tastify/core';
 
@@ -54,6 +57,19 @@ function makeArtist(overrides?: Partial<TastifyArtist>): TastifyArtist {
     images: [{ url: 'https://img/artist.jpg', width: 300, height: 300 }],
     genres: ['pop', 'rock', 'indie', 'electronic'],
     externalUrl: 'https://open.spotify.com/artist/a1',
+    ...overrides,
+  };
+}
+
+function makeTopAlbum(overrides?: Partial<TastifyTopAlbum>): TastifyTopAlbum {
+  return {
+    id: 'al1',
+    uri: 'spotify:album:al1',
+    name: 'Test Album',
+    images: [{ url: 'https://img/album.jpg', width: 300, height: 300 }],
+    releaseDate: '2024-01-01',
+    externalUrl: 'https://open.spotify.com/album/al1',
+    artists: [makeArtist()],
     ...overrides,
   };
 }
@@ -276,6 +292,39 @@ describe('renderTopArtists', () => {
     expect(
       el.querySelector('.tf-time-range-selector__btn--active')!.textContent,
     ).toBe('4 weeks');
+  });
+});
+
+describe('renderTopAlbums', () => {
+  const data: TopAlbumsData = {
+    albums: [makeTopAlbum({ id: 'al1', name: 'Album 1' }), makeTopAlbum({ id: 'al2', name: 'Album 2' })],
+    timeRange: 'medium_term',
+    fetchedAt: Date.now(),
+  };
+
+  it('renders list layout with correct classes', () => {
+    const el = renderTopAlbums(data, { layout: 'list' });
+    expect(el.classList.contains('tf-top-tracks')).toBe(true);
+    expect(el.classList.contains('tf-top-tracks--list')).toBe(true);
+    expect(el.classList.contains('tf-top-albums')).toBe(true);
+    expect(el.querySelector('.tf-top-tracks__header')!.textContent).toBe('Top Albums');
+    expect(el.querySelectorAll('.tf-track-card--list').length).toBe(2);
+  });
+
+  it('renders grid layout', () => {
+    const el = renderTopAlbums(data, { layout: 'grid', columns: 2 });
+    expect(el.classList.contains('tf-top-tracks--grid')).toBe(true);
+    expect(el.querySelectorAll('.tf-track-card--grid').length).toBe(2);
+    const list = el.querySelector('.tf-top-tracks__list') as HTMLElement;
+    expect(list.style.gridTemplateColumns).toBe('repeat(2, 1fr)');
+  });
+
+  it('shows rank numbers in list mode when showRank=true', () => {
+    const el = renderTopAlbums(data, { layout: 'list', showRank: true });
+    const ranks = el.querySelectorAll('.tf-track-card__rank');
+    expect(ranks.length).toBe(2);
+    expect(ranks[0]!.textContent).toBe('1');
+    expect(ranks[1]!.textContent).toBe('2');
   });
 });
 

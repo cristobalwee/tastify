@@ -51,6 +51,22 @@ vi.mock('@tastify/core', () => {
       };
     }
 
+    async getTopAlbums() {
+      return {
+        albums: [{
+          id: 'al1',
+          uri: 'spotify:album:al1',
+          name: 'Album 1',
+          images: [{ url: 'https://img.jpg', width: 300, height: 300 }],
+          releaseDate: '2024-01-01',
+          externalUrl: '',
+          artists: [{ id: 'a1', name: 'Artist', images: [], genres: [], uri: '', externalUrl: '' }],
+        }],
+        timeRange: 'medium_term',
+        fetchedAt: Date.now(),
+      };
+    }
+
     async getTopArtists() {
       return {
         artists: [{
@@ -149,6 +165,19 @@ describe('mount()', () => {
 
     await vi.waitFor(() => {
       expect(container.querySelector('.tf-top-artists')).toBeTruthy();
+    });
+
+    widget.destroy();
+  });
+
+  it('mounts top-albums widget', async () => {
+    const widget = mount(container, {
+      type: 'top-albums',
+      token: 'test-token',
+    });
+
+    await vi.waitFor(() => {
+      expect(container.querySelector('.tf-top-albums')).toBeTruthy();
     });
 
     widget.destroy();

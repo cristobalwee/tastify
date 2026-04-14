@@ -3,6 +3,7 @@ import type {
   TastifyTrack,
   NowPlayingData,
   TopTracksData,
+  TopAlbumsData,
   TopArtistsData,
   RecentlyPlayedData,
   TimeRange,
@@ -12,6 +13,7 @@ import { Cache } from './cache.js';
 import {
   fetchNowPlaying,
   fetchTopTracks,
+  fetchTopAlbums,
   fetchTopArtists,
   fetchRecentlyPlayed,
   fetchArtistTopTracks,
@@ -22,6 +24,7 @@ const DEFAULT_SOFT_TTL = {
   nowPlaying: 30_000,
   recentlyPlayed: 60_000,
   topTracks: 300_000,
+  topAlbums: 300_000,
   topArtists: 300_000,
 } as const;
 
@@ -108,6 +111,21 @@ export class TastifyClient {
       () => fetchTopTracks(token, timeRange, limit),
       this.softTTL('topTracks'),
       this.hardTTL('topTracks'),
+    );
+  }
+
+  async getTopAlbums(opts?: {
+    timeRange?: TimeRange;
+    limit?: number;
+  }): Promise<TopAlbumsData> {
+    const timeRange = opts?.timeRange ?? 'medium_term';
+    const limit = opts?.limit ?? 20;
+    const token = await this.resolveToken();
+    return this.cache.getOrFetch(
+      `top-albums:${timeRange}:${limit}`,
+      () => fetchTopAlbums(token, timeRange, limit),
+      this.softTTL('topAlbums'),
+      this.hardTTL('topAlbums'),
     );
   }
 

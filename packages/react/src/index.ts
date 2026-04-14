@@ -1,10 +1,12 @@
 export { TastifyProvider, type TastifyProviderProps, type TastifyTheme, useTastifyClient, useTastifyTheme } from './provider.js';
 export { useNowPlaying } from './hooks/useNowPlaying.js';
 export { useTopTracks } from './hooks/useTopTracks.js';
+export { useTopAlbums } from './hooks/useTopAlbums.js';
 export { useTopArtists } from './hooks/useTopArtists.js';
 export { useRecentlyPlayed } from './hooks/useRecentlyPlayed.js';
 export { NowPlaying, type NowPlayingProps } from './components/NowPlaying.js';
 export { TopTracks, type TopTracksProps } from './components/TopTracks.js';
+export { TopAlbums, type TopAlbumsProps } from './components/TopAlbums.js';
 export { TopArtists, type TopArtistsProps } from './components/TopArtists.js';
 export { RecentlyPlayed, type RecentlyPlayedProps } from './components/RecentlyPlayed.js';
 export { TimeRangeSelector, type TimeRangeSelectorProps } from './components/TimeRangeSelector.js';
@@ -27,8 +29,10 @@ export type {
   TastifyTrack,
   NowPlayingData,
   TopTracksData,
+  TopAlbumsData,
   TopArtistsData,
   RecentlyPlayedData,
+  TastifyTopAlbum,
   TimeRange,
   DataState,
   TastifyConfig,

@@ -62,6 +62,61 @@ const mockTopTracksResponse = {
   ],
 };
 
+const mockTopAlbumsResponse = {
+  items: [
+    {
+      id: 'track-1',
+      uri: 'spotify:track:1',
+      name: 'Track 1',
+      artists: [
+        {
+          id: 'a1',
+          uri: 'spotify:artist:1',
+          name: 'Artist',
+          external_urls: { spotify: 'https://open.spotify.com/artist/1' },
+        },
+      ],
+      album: {
+        id: 'album-1',
+        uri: 'spotify:album:1',
+        name: 'Album 1',
+        images: [],
+        release_date: '2024-01-01',
+        external_urls: { spotify: 'https://open.spotify.com/album/1' },
+      },
+      duration_ms: 180000,
+      preview_url: null,
+      external_urls: { spotify: 'https://open.spotify.com/track/1' },
+      explicit: false,
+    },
+    {
+      id: 'track-2',
+      uri: 'spotify:track:2',
+      name: 'Track 2',
+      artists: [
+        {
+          id: 'a1',
+          uri: 'spotify:artist:1',
+          name: 'Artist',
+          external_urls: { spotify: 'https://open.spotify.com/artist/1' },
+        },
+      ],
+      album: {
+        id: 'album-2',
+        uri: 'spotify:album:2',
+        name: 'Album 2',
+        images: [],
+        release_date: '2024-01-01',
+        external_urls: { spotify: 'https://open.spotify.com/album/2' },
+      },
+      duration_ms: 180000,
+      preview_url: null,
+      external_urls: { spotify: 'https://open.spotify.com/track/2' },
+      explicit: false,
+    },
+  ],
+};
+
 function createMockFetch(body: unknown, status = 200) {
   return vi.fn().mockResolvedValue({
     ok: status >= 200 && status < 300,
@@ -202,6 +257,16 @@ describe('TastifyClient', () => {
       await client.getTopTracks({ timeRange: 'long_term' });
 
       // Should make 2 separate fetch calls for different time ranges
+      expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+    });
+
+    it('uses different cache keys for top albums per timeRange', async () => {
+      globalThis.fetch = createMockFetch(mockTopAlbumsResponse);
+
+      const client = new TastifyClient({ token: 'token' });
+      await client.getTopAlbums({ timeRange: 'short_term' });
+      await client.getTopAlbums({ timeRange: 'long_term' });
+
       expect(globalThis.fetch).toHaveBeenCalledTimes(2);
     });
   });

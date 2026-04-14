@@ -50,6 +50,22 @@ export interface TopTracksData {
   fetchedAt: number;
 }
 
+export interface TastifyTopAlbum {
+  id: string;
+  uri: string;
+  name: string;
+  images: TastifyImage[];
+  releaseDate: string;
+  externalUrl: string;
+  artists: TastifyArtist[];
+}
+
+export interface TopAlbumsData {
+  albums: TastifyTopAlbum[];
+  timeRange: TimeRange;
+  fetchedAt: number;
+}
+
 export interface TopArtistsData {
   artists: TastifyArtist[];
   timeRange: TimeRange;

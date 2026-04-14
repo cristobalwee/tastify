@@ -3,8 +3,10 @@ import type {
   TastifyAlbum,
   TastifyArtist,
   TastifyTrack,
+  TastifyTopAlbum,
   NowPlayingData,
   TopTracksData,
+  TopAlbumsData,
   TopArtistsData,
   RecentlyPlayedData,
   TimeRange,
@@ -199,6 +201,43 @@ export async function fetchTopTracks(
   const raw: RawTopTracks = await response.json();
   return {
     tracks: raw.items.map(normalizeTrack),
+    timeRange,
+    fetchedAt: Date.now(),
+  };
+}
+
+export async function fetchTopAlbums(
+  token: string,
+  timeRange: TimeRange = 'medium_term',
+  limit: number = 20,
+): Promise<TopAlbumsData> {
+  const fetchLimit = Math.min(Math.max(limit * 3, limit), 50);
+  const response = await spotifyFetch(
+    `${ENDPOINTS.topTracks}?time_range=${timeRange}&limit=${fetchLimit}`,
+    token,
+  );
+  const raw: RawTopTracks = await response.json();
+
+  const albums: TastifyTopAlbum[] = [];
+  const seen = new Set<string>();
+
+  for (const track of raw.items) {
+    const album = track.album;
+    if (seen.has(album.id)) {
+      continue;
+    }
+    seen.add(album.id);
+    albums.push({
+      ...normalizeAlbum(album),
+      artists: track.artists.map(normalizeArtist),
+    });
+    if (albums.length >= limit) {
+      break;
+    }
+  }
+
+  return {
+    albums,
     timeRange,
     fetchedAt: Date.now(),
   };

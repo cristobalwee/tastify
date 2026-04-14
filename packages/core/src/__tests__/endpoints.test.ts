@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   fetchNowPlaying,
   fetchTopTracks,
+  fetchTopAlbums,
   fetchTopArtists,
   fetchRecentlyPlayed,
 } from '../endpoints.js';
@@ -127,6 +128,38 @@ describe('endpoints', () => {
       expect(result.artists[0]!.name).toBe('Test Artist');
       expect(result.artists[0]!.genres).toEqual(['pop']);
       expect(result.timeRange).toBe('long_term');
+    });
+  });
+
+  describe('fetchTopAlbums', () => {
+    it('returns unique albums derived from top tracks', async () => {
+      globalThis.fetch = mockFetch({
+        items: [
+          mockTrack,
+          { ...mockTrack, id: 'track-2', uri: 'spotify:track:2' },
+          {
+            ...mockTrack,
+            id: 'track-3',
+            uri: 'spotify:track:3',
+            album: {
+              ...mockTrack.album,
+              id: 'album-2',
+              uri: 'spotify:album:2',
+              name: 'Second Album',
+            },
+          },
+        ],
+      });
+
+      const result = await fetchTopAlbums('token', 'medium_term', 2);
+      expect(result.albums).toHaveLength(2);
+      expect(result.albums[0]!.name).toBe('Test Album');
+      expect(result.albums[0]!.artists[0]!.name).toBe('Test Artist');
+      expect(result.albums[1]!.name).toBe('Second Album');
+      expect(globalThis.fetch).toHaveBeenCalledWith(
+        'https://api.spotify.com/v1/me/top/tracks?time_range=medium_term&limit=6',
+        { headers: { Authorization: 'Bearer token' } },
+      );
     });
   });
 
